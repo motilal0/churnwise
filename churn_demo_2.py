@@ -25,7 +25,7 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import make_classification
 import streamlit as st
 
-churn_data = pd.read_csv(r"C:/Users/motilals/Jupyter_Notebooks/Churn_Modelling.csv")
+churn_data = pd.read_csv(r"./Churn_Modelling.csv")
 
 
 
