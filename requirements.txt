@@ -13,5 +13,5 @@ random
 statsmodels
 plotly
 seaborn
-matplotlib
+matplotlib.pyplot
 patsy
