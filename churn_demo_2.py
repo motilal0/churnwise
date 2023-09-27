@@ -26,7 +26,7 @@ from sklearn.datasets import make_classification
 import streamlit as st
 
 # churn_data = pd.read_csv(r"D:/datasets/Churn/Churn_Modelling.csv")
-churn_data = pd.read_csv(r"./Churn_Modelling.csv")
+churn_data = pd.read_csv(r"D:/datasets/Churn/Churn_Modelling.csv")
 
 
 
@@ -362,24 +362,47 @@ if file is not None:
 
         # Correlation matrix
 
-
-        import seaborn as sns
-        import matplotlib.pyplot as plt
+        import plotly.express as px
+        import streamlit as st
 
         # Select the columns of interest
-        selected_columns = ['creditscore', 'age', 'tenure', 'balance','estimatedsalary']
+        selected_columns = ['creditscore', 'age', 'tenure', 'balance', 'estimatedsalary']
 
         selected_features = churn_mapped_data[selected_columns]
+
         # Compute pairwise correlations
         correlation_matrix = selected_features.corr()
-        print(correlation_matrix)
-        # Create a heatmap plot
-        plt.figure(figsize=(7, 6))
-        # sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".4f", linewidths=0.1)
-        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".4f", linewidths=0.1)
-        plt.title('Correlation Matrix')
-        st.pyplot(plt)
+        st.subheader('Correlation Matrix')
+        # Create a heatmap plot using Plotly
+        fig = px.imshow(correlation_matrix, color_continuous_scale='BlueRed', labels=dict( color="Correlation"),)
 
+        # Increase figure size
+        fig.update_layout(width=900, height=800)
+
+        # Manually specify annotations with font color
+        annotations = []
+        for i in range(len(selected_columns)):
+            for j in range(len(selected_columns)):
+                annotations.append(
+                    dict(
+                        text=round(correlation_matrix.iloc[i, j], 2),
+                        x=selected_columns[i],
+                        y=selected_columns[j],
+                        xref="x1",
+                        yref="y1",
+                        showarrow=False,
+                        font=dict(size=18, color='white'),  # Set font size and color
+                    )
+                )
+
+        # Add annotations to the heatmap
+        fig.update_layout(annotations=annotations)
+        fig.update_xaxes(side="top", tickfont=dict(size=18, color='black'))
+        fig.update_yaxes(tickfont=dict(size=18, color='black'))
+
+
+        # Display the Plotly figure using Streamlit
+        st.plotly_chart(fig)
 
         # ##### VIF Values
 
@@ -398,7 +421,6 @@ if file is not None:
         vif['variable'] = X_intercept.columns
 
         # Print the VIF values
-        print(vif)
         st.subheader('Multicollinearity Diagnostic')
         st.table(vif)
 
@@ -456,11 +478,11 @@ if file is not None:
             print(f'test confusion Matrix:\n{test_confusion}')
 
             ConfusionMatrixDisplay.from_estimator(log_reg_model, X_train, y_train)
-            plt.title('Train: Confusion Matrix\n')
+            plt.title('Train Confusion Matrix\n')
             st.pyplot(plt)
 
             ConfusionMatrixDisplay.from_estimator(log_reg_model, X_test, y_test)
-            plt.title('Test: Confusion Matrix\n')
+            plt.title('Test Confusion Matrix\n')
             st.pyplot(plt)
 
             print(f'Classification Report:\n{report}')
@@ -753,12 +775,6 @@ if file is not None:
 
         st.plotly_chart(fig)
 
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-    
-    # Select the columns of interest
-    selected_columns = ['creditscore', 'age', 'tenure', 'balance','estimatedsalary']
-    
 
     st.download_button(
             "Click to Download",
@@ -767,15 +783,3 @@ if file is not None:
             "text/csv",
             key='download-csv'
         )
-
-
-    selected_features = churn_mapped_data[selected_columns]
-    # Compute pairwise correlations
-    correlation_matrix = selected_features.corr()
-    print(correlation_matrix)
-    # Create a heatmap plot
-    plt.figure(figsize=(7, 6))
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".4f", linewidths=0.1)
-    plt.title('Correlation Matrix')
-    plt.show()
-  
