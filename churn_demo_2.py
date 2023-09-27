@@ -453,11 +453,11 @@ if file is not None:
             print(f'test confusion Matrix:\n{test_confusion}')
 
             ConfusionMatrixDisplay.from_estimator(log_reg_model, X_train, y_train)
-            plt.title('Train Confusion Matrix\n')
+            plt.title('Train: Confusion Matrix\n')
             st.pyplot(plt)
 
             ConfusionMatrixDisplay.from_estimator(log_reg_model, X_test, y_test)
-            plt.title('Test Confusion Matrix\n')
+            plt.title('Test: Confusion Matrix\n')
             st.pyplot(plt)
 
             print(f'Classification Report:\n{report}')
