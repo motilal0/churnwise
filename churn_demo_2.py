@@ -374,7 +374,7 @@ if file is not None:
         correlation_matrix = selected_features.corr()
         # Create a heatmap plot
         plt.figure(figsize=(10, 8))
-        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
+        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.3)
         plt.title('Correlation Heatmap')
         st.pyplot(plt)
 
