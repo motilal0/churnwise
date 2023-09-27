@@ -758,16 +758,6 @@ if file is not None:
     # Select the columns of interest
     selected_columns = ['creditscore', 'age', 'tenure', 'balance','estimatedsalary']
     
-    selected_features = churn_mapped_data[selected_columns]
-    # Compute pairwise correlations
-    correlation_matrix = selected_features.corr()
-    print(correlation_matrix)
-    # Create a heatmap plot
-    plt.figure(figsize=(7, 6))
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".4f", linewidths=0.1)
-    plt.title('Correlation Matrix')
-    plt.show()
-
 
     st.download_button(
             "Click to Download",
@@ -776,3 +766,15 @@ if file is not None:
             "text/csv",
             key='download-csv'
         )
+
+
+  selected_features = churn_mapped_data[selected_columns]
+  # Compute pairwise correlations
+  correlation_matrix = selected_features.corr()
+  print(correlation_matrix)
+  # Create a heatmap plot
+  plt.figure(figsize=(7, 6))
+  sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".4f", linewidths=0.1)
+  plt.title('Correlation Matrix')
+  plt.show()
+
