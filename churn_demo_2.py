@@ -397,6 +397,7 @@ if file is not None:
         vif['variable'] = X_intercept.columns
 
         # Print the VIF values
+        print(vif)
         st.subheader('Multicollinearity Diagnostic')
         st.table(vif)
 
