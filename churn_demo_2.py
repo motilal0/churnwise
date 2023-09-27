@@ -376,7 +376,7 @@ if file is not None:
         plt.figure(figsize=(7, 6))
         sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.1)
         plt.title('Correlation Matrix')
-        st.pyplot(plt)
+        plt.show()
 
 
         # ##### VIF Values
