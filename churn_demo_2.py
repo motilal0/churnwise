@@ -385,7 +385,7 @@ if file is not None:
             for j in range(len(selected_columns)):
                 annotations.append(
                     dict(
-                        text=round(correlation_matrix.iloc[i, j], 2),
+                        text=round(correlation_matrix.iloc[i, j], 4),
                         x=selected_columns[i],
                         y=selected_columns[j],
                         xref="x1",
