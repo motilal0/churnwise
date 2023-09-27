@@ -372,11 +372,12 @@ if file is not None:
         selected_features = churn_mapped_data[selected_columns]
         # Compute pairwise correlations
         correlation_matrix = selected_features.corr()
+        print(correlation_matrix)
         # Create a heatmap plot
         plt.figure(figsize=(7, 6))
         sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.1)
         plt.title('Correlation Matrix')
-        plt.show()
+        st.pyplot(plt)
 
 
         # ##### VIF Values
