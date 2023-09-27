@@ -375,6 +375,7 @@ if file is not None:
         print(correlation_matrix)
         # Create a heatmap plot
         plt.figure(figsize=(7, 6))
+        # sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".4f", linewidths=0.1)
         sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".4f", linewidths=0.1)
         plt.title('Correlation Matrix')
         st.pyplot(plt)
