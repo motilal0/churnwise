@@ -5,7 +5,7 @@
 
 # ### Importing necessary libraries
 
-# In[2]:
+
 
 
 import pandas as pd
@@ -17,7 +17,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import statsmodels.api as sm
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score,  ConfusionMatrixDisplay
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import train_test_split
 
@@ -25,8 +25,7 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import make_classification
 import streamlit as st
 
-churn_data = pd.read_csv(r"./Churn_Modelling.csv")
-
+churn_data = pd.read_csv(r"D:/datasets/Churn/Churn_Modelling.csv")
 
 
 
@@ -667,7 +666,11 @@ if file is not None:
         # int_to_convert = ['creditscore', 'geography', 'gender', 'age', 'tenure', 'numofproducts', 'hascrcard', 'isactivemember', 'churn']
         # generated_data[int_to_convert] = generated_data[int_to_convert].astype(int)
 
-       #save generated_data to  file
+
+        # In[19]:
+
+
+        #save generated_data to  file
         # generated_data = pd.read_csv("D:/datasets/Churn/similar_generated_data.csv")
         # generated_data = pd.read_csv("similar_generated_data.csv")
 
@@ -748,4 +751,3 @@ if file is not None:
             "text/csv",
             key='download-csv'
         )
-
