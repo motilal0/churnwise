@@ -438,7 +438,9 @@ if file is not None:
             train_accuracy = accuracy_score(y_train, y_pred_train)
             test_accuracy = accuracy_score(y_test, y_pred)
 
-            confusion = confusion_matrix(y_test, y_pred)
+            train_confusion = confusion_matrix(y_train, y_pred_train)
+            test_confusion = confusion_matrix(y_test, y_pred)
+
             report = classification_report(y_test, y_pred)
 
             print(f'Train Accuracy: {train_accuracy}')
@@ -447,10 +449,15 @@ if file is not None:
             st.subheader(f'Train Accuracy: {train_accuracy}')
             st.subheader(f'Test Accuracy: {test_accuracy}')
 
-            print(f'Confusion Matrix:\n{confusion}')
+            print(f'train confusion Matrix:\n{train_confusion}')
+            print(f'test confusion Matrix:\n{test_confusion}')
+
+            ConfusionMatrixDisplay.from_estimator(log_reg_model, X_train, y_train)
+            plt.title('Train Confusion Matrix\n')
+            st.pyplot(plt)
 
             ConfusionMatrixDisplay.from_estimator(log_reg_model, X_test, y_test)
-            plt.title('Confusion Matrix\n')
+            plt.title('Test Confusion Matrix\n')
             st.pyplot(plt)
 
             print(f'Classification Report:\n{report}')
@@ -721,8 +728,8 @@ if file is not None:
 
         columns_to_drop = ['CxF', 'X']
         score_data_op = df.drop(columns=columns_to_drop)
-
         category_percentages = (score_data['churn_category'].value_counts(normalize=True) * 100).reset_index()
+        category_percentages.columns = ['churn_category', 'percentage']  # Set column names
 
         # Define color mapping for categories
         color_mapping = {'Low': 'green', 'Medium': 'yellow', 'High': 'red'}
@@ -732,15 +739,14 @@ if file is not None:
         # Create a histogram using Plotly with category order and custom colors
         fig = px.bar(
             category_percentages,
-            x='index',
-            y='churn_category',
+            x='churn_category',
+            y='percentage',  # Use 'percentage' for the y-axis
             title='Churn Prediction Category Histogram',
-            labels={'index': 'Churn Category', 'churn_category': 'Churn Percentage'},
-            color='index',  # Use 'index' for the color parameter
-            color_discrete_map=color_mapping,  # Map categories to custom colors
-            category_orders={'index': category_order},  # Set the custom order
+            labels={'churn_category': 'Churn Category', 'percentage': 'Churn Percentage'},
+            color='churn_category',
+            color_discrete_map=color_mapping,
+            category_orders={'churn_category': category_order},
         )
-
 
         st.plotly_chart(fig)
 
