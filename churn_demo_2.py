@@ -30,6 +30,7 @@ churn_data = pd.read_csv(r"./Churn_Modelling.csv")
 
 
 
+
 # churn_data
 
 
@@ -100,7 +101,7 @@ if file is not None:
 
 
     # ##### creation of tabs
-    tab1, tab2, tab3 = st.tabs(["EDA", "Model Dev", "Validation"])
+    tab1, tab2, tab3 = st.tabs(["EDA", "Model Dev and Validation", "Scoring"])
 
     with tab1:
         # #### Frequency Distribution of categorical variables
@@ -395,7 +396,8 @@ if file is not None:
         vif['variable'] = X_intercept.columns
 
         # Print the VIF values
-        print(vif)
+        st.subheader('Multicollinearity Diagnostic')
+        st.table(vif)
 
     with tab2:
         # ### Model Building
@@ -442,7 +444,15 @@ if file is not None:
             print(f'Train Accuracy: {train_accuracy}')
             print(f'Test Accuracy: {test_accuracy}')
 
+            st.subheader(f'Train Accuracy: {train_accuracy}')
+            st.subheader(f'Test Accuracy: {test_accuracy}')
+
             print(f'Confusion Matrix:\n{confusion}')
+
+            ConfusionMatrixDisplay.from_estimator(log_reg_model, X_test, y_test)
+            plt.title('Confusion Matrix\n')
+            st.pyplot(plt)
+
             print(f'Classification Report:\n{report}')
 
             ########################################################################################
@@ -507,6 +517,8 @@ if file is not None:
             print(f"\n train data estimate:\n")
             # Summary of results
             print(sm_Log_model.summary())
+            st.subheader("Parameter estimate Table:\n")
+            st.table(train_data_estimate)
 
             ########################################################################################
             # Create a DataFrame to store the parameter estimates
@@ -536,7 +548,8 @@ if file is not None:
                 'Coefficient_Train']
 
             print(f"\nvariation between test and train estimates:\n {coefficients_df}")
-
+            st.subheader("Coefficient Variation:\n")
+            st.table(coefficients_df)
             fit_and_estimate.coefficients_df = coefficients_df
             fit_and_estimate.coefficient = train_data_estimate.iloc[:, 1]
 
@@ -547,6 +560,8 @@ if file is not None:
 
         X1 = X.drop(['estimatedsalary', 'balance'], axis=1)
         fit2 = fit_and_estimate(X1, y)
+
+
 
 
         def rm_insig_val(df, X_train, y_train):
@@ -652,11 +667,7 @@ if file is not None:
         # int_to_convert = ['creditscore', 'geography', 'gender', 'age', 'tenure', 'numofproducts', 'hascrcard', 'isactivemember', 'churn']
         # generated_data[int_to_convert] = generated_data[int_to_convert].astype(int)
 
-
-        # In[19]:
-
-
-        #save generated_data to  file
+       #save generated_data to  file
         # generated_data = pd.read_csv("D:/datasets/Churn/similar_generated_data.csv")
         # generated_data = pd.read_csv("similar_generated_data.csv")
 
@@ -700,24 +711,33 @@ if file is not None:
 
         print(set(score_data['churn_category'].to_list()))
 
-        score_data_op = score_data[
-            ['creditscore', 'geography', 'age', 'tenure', 'isactivemember', 'churn_prob', 'churn_category']].copy()
+        df = score_data.copy()
+        df['customer_id'] = ['C' + str(i) for i in range(1, len(df) + 1)]
+        df.set_index('customer_id', inplace=True)
 
+        columns_to_drop = ['CxF', 'X']
+        score_data_op = df.drop(columns=columns_to_drop)
 
+        category_percentages = (score_data['churn_category'].value_counts(normalize=True) * 100).reset_index()
 
         # Define color mapping for categories
         color_mapping = {'Low': 'green', 'Medium': 'yellow', 'High': 'red'}
 
-        # Define the desired category order
         category_order = ['High', 'Medium', 'Low']
 
-        # Create a histogram using Plotly with category order
-        fig = px.histogram(score_data, x='churn_category', color='churn_category',
-                           title='Churn Prediction Category Histogram',
-                           color_discrete_map=color_mapping, category_orders={'churn_category': category_order})
+        # Create a histogram using Plotly with category order and custom colors
+        fig = px.bar(
+            category_percentages,
+            x='index',
+            y='churn_category',
+            title='Churn Prediction Category Histogram',
+            labels={'index': 'Churn Category', 'churn_category': 'Churn Percentage'},
+            color='index',  # Use 'index' for the color parameter
+            color_discrete_map=color_mapping,  # Map categories to custom colors
+            category_orders={'index': category_order},  # Set the custom order
+        )
 
 
-        # Show the chart
         st.plotly_chart(fig)
 
 
@@ -728,3 +748,4 @@ if file is not None:
             "text/csv",
             key='download-csv'
         )
+
