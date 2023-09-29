@@ -17,7 +17,10 @@ import plotly.graph_objects as go
 import plotly.express as px
 import statsmodels.api as sm
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score,  ConfusionMatrixDisplay
+
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import train_test_split
 
@@ -26,7 +29,7 @@ from sklearn.datasets import make_classification
 import streamlit as st
 
 # churn_data = pd.read_csv(r"D:/datasets/Churn/Churn_Modelling.csv")
-churn_data = pd.read_csv(r"./Churn_Modelling.csv")
+churn_data = pd.read_csv(r"D:/datasets/Churn/Churn_Modelling.csv")
 
 
 
@@ -90,6 +93,9 @@ if file is not None:
     churn_mapped_data['gender'] = churn_mapped_data['gender'].map(gender_mapping)
     # Use the map function to apply the mapping to the 'geography' column
     churn_mapped_data['geography'] = churn_mapped_data['geography'].map(geography_mapping)
+    # Transform the Categorical Variables: Creating Dummy Variables
+    churn_mapped_data = pd.get_dummies(churn_mapped_data, columns=['geography'])
+
 
 
 
@@ -104,160 +110,213 @@ if file is not None:
     tab1, tab2, tab3 = st.tabs(["EDA", "Model Dev and Validation", "Scoring"])
 
     with tab1:
-        # #### Frequency Distribution of categorical variables
+        # #############Calculation of churn rate for categorical variables
+        # Gender
+        # Calculate churn rates by gender
+        gender_churn_rates = churn_data.groupby('gender')['churn'].mean()*100
 
+        # Create a Plotly line chart
+        fig = px.line(
+            gender_churn_rates.reset_index(),
+            x='gender',
+            y='churn',
+            markers=True,
+            labels={'churn': 'Churn Rate '},
+            title='Churn Rate vs. Gender'
+        )
 
+        fig.update_traces(line_color='blue')
+        fig.update_xaxes(title_text='Gender')
+        fig.update_yaxes(title_text='Churn Rate ')
 
-
-
-        # Create a frequency distribution for the 'gender' column
-        gender_distribution = churn_data['gender'].value_counts().reset_index()
-        gender_distribution.columns = ['gender', 'count']
-        print(f"\nGender_distribution : \n{gender_distribution}")
-
-        # Create a bar plot using Plotly Express
-        fig = px.bar(gender_distribution, x='gender', y='count', title='Gender Frequency Distribution')
-        fig.update_xaxes(title='Gender')
-        fig.update_yaxes(title='Count')
-
-        # Define custom colors for the bars
-        colors = ['#FF5733']
-
-        # Show the plot
-        st.bar_chart(gender_distribution, x="gender", y="count")
-
-
-        # Create a frequency distribution for the 'gender' column
-        geography_distribution = churn_data['geography'].value_counts().reset_index()
-        geography_distribution.columns = ['geography', 'count']
-        print(f"\nGeography_distribution : \n{geography_distribution}")
-
-        # Create a bar plot using Plotly Express
-        fig = px.bar(geography_distribution, x='geography', y='count', title='Geography Frequency Distribution')
-        fig.update_xaxes(title='Geography')
-        fig.update_yaxes(title='Count')
-
-        st.bar_chart(geography_distribution, x='geography', y='count')
-
-
-        hascrcard_distribution = churn_data['hascrcard'].value_counts().reset_index()
-        hascrcard_distribution.columns = ['hascrcard', 'count']
-        print(f"\nGender_distribution : \n{hascrcard_distribution}")
-
-        # Create a bar plot using Plotly Express
-        fig = px.bar(hascrcard_distribution, x='hascrcard', y='count', title='hascrcard Frequency Distribution')
-        fig.update_xaxes(title='hascrcard')
-        fig.update_yaxes(title='Count')
-
-        st.bar_chart(hascrcard_distribution, x='hascrcard', y='count')
-
-        # isactivemember
-
-        isactivemember_distribution = churn_data['isactivemember'].value_counts().reset_index()
-        isactivemember_distribution.columns = ['isactivemember', 'count']
-        print(f"\nGender_distribution : \n{isactivemember_distribution}")
-
-        # Create a bar plot using Plotly Express
-        fig = px.bar(isactivemember_distribution, x='isactivemember', y='count', title='isactivemember Frequency Distribution')
-        fig.update_xaxes(title='isactivemember')
-        fig.update_yaxes(title='Count')
-
-        st.bar_chart(isactivemember_distribution,  x='isactivemember', y='count')
-
-
-
-        percentiles = [0, 1, 5, 10, 25, 30, 40, 50, 60, 75, 80, 90, 95, 99, 100]
-
-        percentiles_array = np.array(percentiles) / 100
-        credit_percentile_values = churn_data['creditscore'].quantile(percentiles_array)
-        # Display the percentile values
-        print(f"\ncredit score percentile : \n{credit_percentile_values}")
-
-
-
-        # Create a line chart using Plotly
-        fig = go.Figure(data=go.Scatter(x=percentiles_array, y=credit_percentile_values, mode='lines+markers'))
-
-        # Customize the layout
-        fig.update_layout(
-            title='Percentile Values Line Chart for Credit score',
-            xaxis_title='Percentiles',
-            yaxis_title='Values'
+        # Set the x-axis tickvals and ticktext for categorical labels
+        fig.update_xaxes(
+            tickvals=gender_churn_rates.reset_index()['gender'],  # Values for tick positions
+            ticktext=['Male', 'Female'],  # Corresponding labels
         )
 
         st.plotly_chart(fig)
 
-        # for age
-        age_percentile_values = churn_data['age'].quantile(percentiles_array)
-        # Display the percentile values
-        print(f"\nage percentile : \n{age_percentile_values}")
+        print(gender_churn_rates)
 
-        # Create a line chart using Plotly
-        fig = go.Figure(data=go.Scatter(x=percentiles_array, y=age_percentile_values, mode='lines+markers'))
+        # Geography
 
-        # Customize the layout
-        fig.update_layout(
-            title='Percentile Values Line Chart for age',
-            xaxis_title='Percentiles',
-            yaxis_title='Values'
+        # Calculate churn rates by geography
+        geography_churn_rates = churn_data.groupby('geography')['churn'].mean()*100
+
+        # Create a Plotly line chart
+        fig = px.line(
+            geography_churn_rates.reset_index(),
+            x='geography',
+            y='churn',
+            markers=True,
+            labels={'churn': 'Churn Rate '},
+            title='Churn Rate vs. Geography'
         )
 
-        # Show the chart
-        st.plotly_chart(fig)
+        fig.update_traces(line_color='blue')
+        fig.update_xaxes(title_text='Geography')
+        fig.update_yaxes(title_text='Churn Rate ')
 
-        # for tenure
-        tenure_percentile_values = churn_data['tenure'].quantile(percentiles_array)
-        # Display the percentile values
-        print(f"\ntenure percentile : \n{tenure_percentile_values}")
-
-        # Create a line chart using Plotly
-        fig = go.Figure(data=go.Scatter(x=percentiles_array, y=tenure_percentile_values, mode='lines+markers'))
-
-        # Customize the layout
-        fig.update_layout(
-            title='Percentile Values Line Chart for Tenure',
-            xaxis_title='Percentiles',
-            yaxis_title='Values'
+        # Set the x-axis tickvals and ticktext for categorical labels
+        fig.update_xaxes(
+            tickvals=geography_churn_rates.reset_index()['geography'],  # Values for tick positions
+            ticktext=["Andhra Pradesh", "Bihar", "Goa",
+                      "Gujarat", "Kerala",
+                      "Madhya Pradesh", "Maharashtra"],  # Corresponding labels
         )
 
-        # Show the chart
         st.plotly_chart(fig)
+        print(geography_churn_rates)
 
-        # for balance
-        balance_percentile_values = churn_data['balance'].quantile(percentiles_array)
-        # Display the percentile values
-        print(f"\nbalance percentile : \n{balance_percentile_values}")
+        # Calculate churn rates by geography
+        hascrcard_churn_rates = churn_data.groupby('hascrcard')['churn'].mean()*100
 
-        # Create a line chart using Plotly
-        fig = go.Figure(data=go.Scatter(x=percentiles_array, y=balance_percentile_values, mode='lines+markers'))
-
-        # Customize the layout
-        fig.update_layout(
-            title='Percentile Values Line Chart for balance',
-            xaxis_title='Percentiles',
-            yaxis_title='Values'
+        # Create a Plotly line chart
+        fig = px.line(
+            hascrcard_churn_rates.reset_index(),
+            x='hascrcard',
+            y='churn',
+            markers=True,
+            labels={'churn': 'Churn Rate '},
+            title='Churn Rate vs. hascrcard'
         )
 
-        # Show the chart
-        st.plotly_chart(fig)
+        fig.update_traces(line_color='blue')
+        fig.update_xaxes(title_text='Geography')
+        fig.update_yaxes(title_text='Churn Rate ')
 
-        # for estimatedsalary
-        estimatedsalary_percentile_values = churn_data['estimatedsalary'].quantile(percentiles_array)
-        # Display the percentile values
-        print(f"\nestimated salary percentile : \n{estimatedsalary_percentile_values}")
+        # Set the x-axis tickvals and ticktext for categorical labels
+        fig.update_xaxes(
+            tickvals=hascrcard_churn_rates.reset_index()['hascrcard'],  # Values for tick positions
+            ticktext=["No", "Yes"],  # Corresponding labels
 
-        # Create a line chart using Plotly
-        fig = go.Figure(data=go.Scatter(x=percentiles_array, y=estimatedsalary_percentile_values, mode='lines+markers'))
-
-        # Customize the layout
-        fig.update_layout(
-            title='Percentile Values Line Chart for estimated salary',
-            xaxis_title='Percentiles',
-            yaxis_title='Values'
         )
 
-        # Show the chart
         st.plotly_chart(fig)
+        print(hascrcard_churn_rates)
+
+        # Calculate churn rates by geography
+        isactivemember_churn_rates = churn_data.groupby('isactivemember')['churn'].mean()*100
+
+        # Create a Plotly line chart
+        fig = px.line(
+            isactivemember_churn_rates.reset_index(),
+            x='isactivemember',
+            y='churn',
+            markers=True,
+            labels={'churn': 'Churn Rate '},
+            title='Churn Rate vs. isactivemember'
+        )
+
+        fig.update_traces(line_color='blue')
+        fig.update_xaxes(title_text='Geography')
+        fig.update_yaxes(title_text='Churn Rate ')
+
+        # Set the x-axis tickvals and ticktext for categorical labels
+        fig.update_xaxes(
+            tickvals=isactivemember_churn_rates.reset_index()['isactivemember'],  # Values for tick positions
+            ticktext=["No", "Yes"],  # Corresponding labels
+
+        )
+
+        st.plotly_chart(fig)
+        print(isactivemember_churn_rates)
+
+
+        #
+        # percentiles = [0, 1, 5, 10, 25, 30, 40, 50, 60, 75, 80, 90, 95, 99, 100]
+        #
+        # percentiles_array = np.array(percentiles) / 100
+        # credit_percentile_values = churn_data['creditscore'].quantile(percentiles_array)
+        # # Display the percentile values
+        # print(f"\ncredit score percentile : \n{credit_percentile_values}")
+        #
+        #
+        #
+        # # Create a line chart using Plotly
+        # fig = go.Figure(data=go.Scatter(x=percentiles_array, y=credit_percentile_values, mode='lines+markers'))
+        #
+        # # Customize the layout
+        # fig.update_layout(
+        #     title='Percentile Values Line Chart for Credit score',
+        #     xaxis_title='Percentiles',
+        #     yaxis_title='Values'
+        # )
+        #
+        # st.plotly_chart(fig)
+        #
+        # # for age
+        # age_percentile_values = churn_data['age'].quantile(percentiles_array)
+        # # Display the percentile values
+        # print(f"\nage percentile : \n{age_percentile_values}")
+        #
+        # # Create a line chart using Plotly
+        # fig = go.Figure(data=go.Scatter(x=percentiles_array, y=age_percentile_values, mode='lines+markers'))
+        #
+        # # Customize the layout
+        # fig.update_layout(
+        #     title='Percentile Values Line Chart for age',
+        #     xaxis_title='Percentiles',
+        #     yaxis_title='Values'
+        # )
+        #
+        # # Show the chart
+        # st.plotly_chart(fig)
+        #
+        # # for tenure
+        # tenure_percentile_values = churn_data['tenure'].quantile(percentiles_array)
+        # # Display the percentile values
+        # print(f"\ntenure percentile : \n{tenure_percentile_values}")
+        #
+        # # Create a line chart using Plotly
+        # fig = go.Figure(data=go.Scatter(x=percentiles_array, y=tenure_percentile_values, mode='lines+markers'))
+        #
+        # # Customize the layout
+        # fig.update_layout(
+        #     title='Percentile Values Line Chart for Tenure',
+        #     xaxis_title='Percentiles',
+        #     yaxis_title='Values'
+        # )
+        #
+        # # Show the chart
+        # st.plotly_chart(fig)
+        #
+        # # for balance
+        # balance_percentile_values = churn_data['balance'].quantile(percentiles_array)
+        # # Display the percentile values
+        # print(f"\nbalance percentile : \n{balance_percentile_values}")
+        #
+        # # Create a line chart using Plotly
+        # fig = go.Figure(data=go.Scatter(x=percentiles_array, y=balance_percentile_values, mode='lines+markers'))
+        #
+        # # Customize the layout
+        # fig.update_layout(
+        #     title='Percentile Values Line Chart for balance',
+        #     xaxis_title='Percentiles',
+        #     yaxis_title='Values'
+        # )
+        #
+        # # Show the chart
+        # st.plotly_chart(fig)
+        #
+        # # for estimatedsalary
+        # estimatedsalary_percentile_values = churn_data['estimatedsalary'].quantile(percentiles_array)
+        # # Display the percentile values
+        # print(f"\nestimated salary percentile : \n{estimatedsalary_percentile_values}")
+        #
+        # # Create a line chart using Plotly
+        # fig = go.Figure(data=go.Scatter(x=percentiles_array, y=estimatedsalary_percentile_values, mode='lines+markers'))
+        #
+        # # Customize the layout
+        # fig.update_layout(
+        #     title='Percentile Values Line Chart for estimated salary',
+        #     xaxis_title='Percentiles',
+        #     yaxis_title='Values'
+        # )
+        #
+        # # Show the chart
+        # st.plotly_chart(fig)
 
         # #### Making Bins of the continous variables
 
@@ -281,7 +340,7 @@ if file is not None:
         churn_rate = df_bin.groupby('age_slab')['churn'].mean() * 100
 
         # Create a Plotly line chart
-        fig = px.line(
+        fig1 = px.line(
             churn_rate.reset_index(),
             x='age_slab',
             y='churn',
@@ -290,10 +349,17 @@ if file is not None:
             title=f'churn Rate vs. age_slab'
         )
 
-        fig.update_traces(line_color='blue')  # Set the line color
-        fig.update_xaxes(title_text='age_slab')
-        fig.update_yaxes(title_text='churn Rate (%)')
-        st.plotly_chart(fig)
+        fig1.update_traces(line_color='blue')  # Set the line color
+        fig1.update_xaxes(title_text='age_slab')
+        fig1.update_yaxes(title_text='churn Rate (%)')
+        # Set the y-axis range and tick interval
+        fig1.update_yaxes(
+            # range=[0, 100],  # Set the range from 0 to 100
+            dtick=10  # Set the tick interval to 10
+        )
+
+        st.plotly_chart(fig1)
+
 
         # Salary vs churn
         salary_bins = [18, 10000, 60000, 110000, 130000, 150000, 170000, 210000]  # Salary categories
@@ -327,7 +393,7 @@ if file is not None:
 
         # Customize the appearance (optional)
         fig.update_xaxes(title_text='est_salary_slab')
-        fig.update_yaxes(title_text='churn')
+        fig.update_yaxes(title_text='churn Rate (%)')
 
         # Display the chart
         st.plotly_chart(fig)
@@ -359,92 +425,89 @@ if file is not None:
         fig.update_yaxes(title_text='churn Rate (%)')
         st.plotly_chart(fig)
 
-
-        # Correlation matrix
-
-        import plotly.express as px
-        import streamlit as st
-
-        # Select the columns of interest
-        selected_columns = ['creditscore', 'age', 'tenure', 'balance', 'estimatedsalary']
-
-        selected_features = churn_mapped_data[selected_columns]
-
-        # Compute pairwise correlations
-        correlation_matrix = selected_features.corr()
-        st.subheader('Correlation Matrix')
-        # Create a heatmap plot using Plotly
-        fig = px.imshow(correlation_matrix, color_continuous_scale='BlueRed', labels=dict( color="Correlation"),)
-
-        # Increase figure size
-        fig.update_layout(width=900, height=800)
-
-        # Manually specify annotations with font color
-        annotations = []
-        for i in range(len(selected_columns)):
-            for j in range(len(selected_columns)):
-                annotations.append(
-                    dict(
-                        text=round(correlation_matrix.iloc[i, j], 4),
-                        x=selected_columns[i],
-                        y=selected_columns[j],
-                        xref="x1",
-                        yref="y1",
-                        showarrow=False,
-                        font=dict(size=18, color='white'),  # Set font size and color
-                    )
-                )
-
-        # Add annotations to the heatmap
-        fig.update_layout(annotations=annotations)
-        fig.update_xaxes(side="top", tickfont=dict(size=18, color='black'))
-        fig.update_yaxes(tickfont=dict(size=18, color='black'))
-
-
-        # Display the Plotly figure using Streamlit
-        st.plotly_chart(fig)
-
-        # ##### VIF Values
-
-
-        from patsy.highlevel import dmatrices
-        from statsmodels.stats.outliers_influence import variance_inflation_factor
-
-        # Assuming you have a DataFrame called churn_data
-        # Create the design matrix for linear regression
-        formula = 'churn ~ creditscore + age + tenure + balance + numofproducts + estimatedsalary'
-        y_intercept, X_intercept = dmatrices(formula, data=churn_mapped_data, return_type='dataframe')
-
-        # Calculate VIF for each explanatory variable
-        vif = pd.DataFrame()
-        vif['VIF'] = [variance_inflation_factor(X_intercept.values, i) for i in range(X_intercept.shape[1])]
-        vif['variable'] = X_intercept.columns
-
-        # Print the VIF values
-        st.subheader('Multicollinearity Diagnostic')
-        st.table(vif)
+        #
+        # # Correlation matrix
+        #
+        # import plotly.express as px
+        # import streamlit as st
+        #
+        # # Select the columns of interest
+        # selected_columns = ['creditscore', 'age', 'tenure', 'balance', 'estimatedsalary']
+        #
+        # selected_features = churn_mapped_data[selected_columns]
+        #
+        # # Compute pairwise correlations
+        # correlation_matrix = selected_features.corr()
+        # st.subheader('Correlation Matrix')
+        # # Create a heatmap plot using Plotly
+        # fig = px.imshow(correlation_matrix, color_continuous_scale='BlueRed', labels=dict( color="Correlation"),)
+        #
+        # # Increase figure size
+        # fig.update_layout(width=900, height=800)
+        #
+        # # Manually specify annotations with font color
+        # annotations = []
+        # for i in range(len(selected_columns)):
+        #     for j in range(len(selected_columns)):
+        #         annotations.append(
+        #             dict(
+        #                 text=round(correlation_matrix.iloc[i, j], 2),
+        #                 x=selected_columns[i],
+        #                 y=selected_columns[j],
+        #                 xref="x1",
+        #                 yref="y1",
+        #                 showarrow=False,
+        #                 font=dict(size=18, color='white'),  # Set font size and color
+        #             )
+        #         )
+        #
+        # # Add annotations to the heatmap
+        # fig.update_layout(annotations=annotations)
+        # fig.update_xaxes(side="top", tickfont=dict(size=18, color='black'))
+        # fig.update_yaxes(tickfont=dict(size=18, color='black'))
+        #
+        #
+        # # Display the Plotly figure using Streamlit
+        # st.plotly_chart(fig)
+        #
+        # # ##### VIF Values
+        #
+        #
+        # from patsy.highlevel import dmatrices
+        # from statsmodels.stats.outliers_influence import variance_inflation_factor
+        #
+        # # Assuming you have a DataFrame called churn_data
+        # # Create the design matrix for linear regression
+        # formula = 'churn ~ creditscore + age + tenure + balance + numofproducts + estimatedsalary'
+        # y_intercept, X_intercept = dmatrices(formula, data=churn_mapped_data, return_type='dataframe')
+        #
+        # # Calculate VIF for each explanatory variable
+        # vif = pd.DataFrame()
+        # vif['VIF'] = [variance_inflation_factor(X_intercept.values, i) for i in range(X_intercept.shape[1])]
+        # vif['variable'] = X_intercept.columns
+        #
+        # # Print the VIF values
+        # st.subheader('Multicollinearity Diagnostic')
+        # st.table(vif)
 
     with tab2:
         # ### Model Building
 
         # #### Logistic Regression
-        #
-
-        # splitting data for modelling
-
-        X = churn_mapped_data.drop(['churn'], axis=1)  # Features
-        y = churn_mapped_data['churn']  # Target variable
 
 
-        ### function to fit the model
+        def fit_and_estimate2(df):
 
-        def fit_and_estimate(X, y):
+            df_train, df_test = train_test_split(df, test_size=0.3, random_state=42, stratify=df['churn'])
+            fit_and_estimate2.df_train=df_train
+            print(df_train['churn'].value_counts(normalize=True))
 
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=40)
-            print(X_train.shape, X_test.shape)
-            fit_and_estimate.X_train_data = X_train
-            fit_and_estimate.y_train_data = y_train
-            fit_and_estimate.X_test_data = X_test
+            print(df_test['churn'].value_counts(normalize=True))
+
+            X_train = df_train.drop(['churn'], axis=1)  # Features
+            y_train = df_train['churn']  # Target variable
+
+
 
             ###############################################################################################
             #########fitting the model
@@ -453,8 +516,12 @@ if file is not None:
             log_reg_model = LogisticRegression()
             # Fit the model to the training data to estimate parameters
             log_reg_model.fit(X_train, y_train)
+            X_test = df_test.drop(['churn'], axis=1)  # Features
+            y_test = df_test['churn']  # Target variable
 
-            fit_and_estimate.log_reg_model = log_reg_model
+
+
+            fit_and_estimate2.log_reg_model = log_reg_model
             # Make predictions on the test set
             y_pred_train = log_reg_model.predict(X_train)
             y_pred = log_reg_model.predict(X_test)
@@ -486,6 +553,8 @@ if file is not None:
             st.pyplot(plt)
 
             print(f'Classification Report:\n{report}')
+
+
 
             ########################################################################################
             # train roc curve
@@ -549,11 +618,13 @@ if file is not None:
             print(f"\n train data estimate:\n")
             # Summary of results
             print(sm_Log_model.summary())
-            st.subheader("Parameter estimate Table:\n")
-            st.table(train_data_estimate)
+            # st.subheader("Parameter estimate Table:\n")
+            # st.table(train_data_estimate)
 
             ########################################################################################
             # Create a DataFrame to store the parameter estimates
+
+
             test_parameter_estimate_table = pd.DataFrame(
                 {'Variable': X_test.columns, 'Coefficient': sm_Log_model.params.values})
 
@@ -566,6 +637,35 @@ if file is not None:
             coefficients_train = log_reg_model.coef_[0]
 
             coef_train_df = pd.DataFrame({'Variable': X_train.columns, 'Coefficient_Train': coefficients_train})
+            print(coef_train_df)
+
+            # Color function to set the bar color based on values
+            def set_bar_color(val):
+                return 'orange' if val <= 0 else 'green'
+
+            coef_train_df['color'] = coef_train_df['Coefficient_Train'].apply(set_bar_color)
+
+            fig = px.bar(
+                coef_train_df,
+                x='Coefficient_Train',
+                y='Variable',
+                orientation='h',
+                title='Feature Weights',
+                labels={'Coefficient_Train': 'Feature Weight'},
+            )
+
+            fig.update_traces(marker_color=coef_train_df['color'])  # Set bar colors based on the 'color' column
+
+            # Customize the x-axis and y-axis labels
+            fig.update_xaxes(title_text='Feature Weight')
+            fig.update_yaxes(title_text='Feature')
+
+            # Add data labels
+            fig.update_traces(text=coef_train_df['Coefficient_Train'].apply(lambda x: f'{x:.4f}'), textposition='auto')
+
+
+            st.plotly_chart(fig)
+            fit_and_estimate2.coef_train_df=coef_train_df
 
             coefficients_df = pd.DataFrame({
                 'Variable': test_parameter_estimate_table['Variable'],  # Assuming variable names are the same
@@ -580,19 +680,18 @@ if file is not None:
                 'Coefficient_Train']
 
             print(f"\nvariation between test and train estimates:\n {coefficients_df}")
-            st.subheader("Coefficient Variation:\n")
-            st.table(coefficients_df)
-            fit_and_estimate.coefficients_df = coefficients_df
-            fit_and_estimate.coefficient = train_data_estimate.iloc[:, 1]
+            # st.subheader("Coefficient Variation:\n")
+            # st.table(coefficients_df)
+            fit_and_estimate2.coefficients_df = coefficients_df
+            fit_and_estimate2.coefficient = train_data_estimate.iloc[:, 1]
 
             return train_data_estimate
 
 
         ##### Fitting the model on raw variables
 
-        X1 = X.drop(['estimatedsalary', 'balance'], axis=1)
-        fit2 = fit_and_estimate(X1, y)
-
+        fit_df=churn_mapped_data.drop(['estimatedsalary', 'balance'], axis=1)
+        fit2 = fit_and_estimate2(fit_df)
 
 
 
@@ -712,7 +811,7 @@ if file is not None:
 
         # p(Y)= 1/1+e^-(c1f+c2f...)
         #   Score = c +c1f + c2f + c3f
-        coefficient = fit_and_estimate.coefficient.astype(str).astype(float).iloc[:-1]
+        coefficient = fit_and_estimate2.coefficient.astype(str).astype(float).iloc[:-1]
 
 
         def calculate_score(row):
