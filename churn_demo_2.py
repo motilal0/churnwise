@@ -92,7 +92,7 @@ if file is not None:
     print(churn_data_summary)
 
     # ##### creation of tabs
-    tab1, tab2, tab3 = st.tabs(["EDA", "Model Dev and Validation", "Scoring"])
+    tab1, tab2, tab3 = st.tabs(["Scoring", "Model Dev and Validation", "EDA"])
 
     with tab1:
         # #############Calculation of churn rate for categorical variables
