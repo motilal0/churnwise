@@ -480,6 +480,25 @@ if file is not None:
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=40)
             print(X_train.shape, X_test.shape)
+
+            print('datatypes')
+            # using dictionary to convert specific columns
+
+            convert_dict = {'geography_1': int,
+                            'geography_2': int,
+                            'geography_3': int,
+                            'geography_4': int,
+                            'geography_5': int,
+                            'geography_6': int,
+                            'geography_7': int
+
+                            }
+
+            X_train = X_train.astype(convert_dict)
+
+
+            X_test = X_test.astype(convert_dict)
+         
             fit_and_estimate.X_train_data = X_train
             fit_and_estimate.y_train_data = y_train
             fit_and_estimate.X_test_data = X_test
@@ -586,6 +605,11 @@ if file is not None:
 
             # Define and fit model
             sm_Log_model = sm.Logit(y_train, X_train).fit()
+            print('x_train shape')
+            print(X_train.shape, y_train.shape)
+            print('dtype')
+            print(X_train.dtypes)
+            print(y_train.dtypes)
 
             log_reg_summary = sm_Log_model.summary()
 
@@ -792,6 +816,11 @@ if file is not None:
 
             # Define and fit model
             sm_Log_model = sm.Logit(y_train, X_train).fit()
+            print('x_train shape')
+            print(X_train.shape, y_train.shape())
+            print('dtype')
+            print(X_train.dtypes)
+            print(y_train.dtypes)
 
             log_reg_summary = sm_Log_model.summary()
 
