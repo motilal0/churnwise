@@ -94,7 +94,7 @@ if file is not None:
     # ##### creation of tabs
     tab1, tab2, tab3 = st.tabs(["Scoring", "Model Dev and Validation", "EDA"])
 
-    with tab1:
+    with tab3:
         # #############Calculation of churn rate for categorical variables
         # Gender
         # Calculate churn rates by gender
@@ -1113,7 +1113,7 @@ if file is not None:
             print(f"after removing all: {model.summary().tables[1]}")
             return sig_features
 
-    with tab3:
+    with tab1:
 
         # ### Sample data generation
 
