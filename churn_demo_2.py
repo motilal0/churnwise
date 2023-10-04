@@ -1016,7 +1016,7 @@ if file is not None:
 
                 KS_data['max_ks'] = np.where(KS_data['ks_stats'] == KS_data['ks_stats'].max(), 'Yes', '')
                 max_ks=KS_data['ks_stats'].max()
-                st.subheader(f"KS: {max_ks}")
+                st.subheader(f" {df_type} KS: {max_ks}")
 
                 # Calculate Gain and Lift.
                 KS_data['Gain'] = KS_data['Percent of ' + response_name + ' (%)'].cumsum()
