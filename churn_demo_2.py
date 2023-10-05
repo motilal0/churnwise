@@ -1302,7 +1302,7 @@ if file is not None:
 
     st.download_button(
         "Click to Download",
-        pd.DataFrame(score_data_op).to_csv(),
+        pd.DataFrame(score_data_op).sort_values(by = 'churn_prob', ascending = False).to_csv(),
         "scored_customers.csv",
         "text/csv",
         key='download-csv'
