@@ -167,7 +167,7 @@ if file is not None:
         )
 
         fig.update_traces(line_color='blue')
-        fig.update_xaxes(title_text='Geography')
+        fig.update_xaxes(title_text='Has Credit Card')
         fig.update_yaxes(title_text='Churn Rate ')
 
         # Set the x-axis tickvals and ticktext for categorical labels
@@ -194,7 +194,7 @@ if file is not None:
         )
 
         fig.update_traces(line_color='blue')
-        fig.update_xaxes(title_text='Geography')
+        fig.update_xaxes(title_text='Is Active Member')
         fig.update_yaxes(title_text='Churn Rate ')
 
         # Set the x-axis tickvals and ticktext for categorical labels
