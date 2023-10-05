@@ -26,10 +26,10 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import make_classification
 import streamlit as st
 
-# churn_data = pd.read_csv(r"D:/datasets/Churn/Churn_Modelling.csv")
 churn_data = pd.read_csv(r"./Churn_Modelling.csv")
+# churn_data = pd.read_csv(r"C:/Users/shreyasaraf/PycharmProjects/Churn Project/New folder/churn-pred/Churn_Modelling.csv")
 
-# churn_data
+#    churn_data
 
 
 # ### Data Preparation
@@ -533,29 +533,28 @@ if file is not None:
             print(f'train confusion Matrix:\n{train_confusion}')
             print(f'test confusion Matrix:\n{test_confusion}')
 
-            def plot_conf_matrix(conf, dftype):
+            def plot_swapped_columns_transposed_conf_matrix(conf, dftype):
                 import plotly.figure_factory as ff
+                import numpy as np
 
-                # Define the confusion matrix values
-                TP = conf[1, 1]
-                TN = conf[0, 0]
-                FP = conf[0, 1]
-                FN = conf[1, 0]
+                # Swap columns in the confusion matrix
+                swapped_columns_conf_matrix = np.array(conf)[:, [1, 0]].tolist()
 
-                # Create a confusion matrix table
-                conf_matrix = [[TN, FP],
-                               [FN, TP]]
+                # Transpose the swapped columns matrix
+                transposed_swapped_columns_conf_matrix = np.array(swapped_columns_conf_matrix).tolist()
+
+
 
                 # Define colors for font based on TP, TN, FP, FN
-                font_colors = [['green', 'red'],
-                               ['red', 'green']]
+                font_colors = [['red', 'green'],
+                               ['green', 'red']]
 
-                # Create custom annotation text with font colors
+                # Create custom annotation text with font colors for the transposed matrix
                 annotations = []
                 for i in range(2):
                     for j in range(2):
-                        label = 'TP' if i == 1 and j == 1 else 'TN' if i == 0 and j == 0 else 'FP' if i == 0 and j == 1 else 'FN'
-                        value = conf_matrix[i][j]
+                        label = 'TP' if i ==  1 and j == 0 else 'FP' if i == 0 and j == 0 else 'TN' if i == 0 and j == 1 else 'FN'
+                        value = transposed_swapped_columns_conf_matrix[i][j]
                         font_color = font_colors[i][j]
                         annotations.append(dict(
                             x=j,
@@ -565,15 +564,15 @@ if file is not None:
                             font=dict(color=font_color)
                         ))
 
-                # Create a figure with custom annotations and color scale
+                # Create a figure with custom annotations and color scale for the transposed matrix
                 fig = ff.create_annotated_heatmap(
-                    z=conf_matrix,
-                    x=['Predicted Negative', 'Predicted Positive'],
+                    z=transposed_swapped_columns_conf_matrix,
+                    x=['Predicted Positive', 'Predicted Negative'],
                     y=['Actual Negative', 'Actual Positive'],
                     colorscale=[[0, 'beige'], [1, '#94CCFB']],
                     showscale=False,  # No color scale
-                    annotation_text=conf_matrix,
-                    customdata=conf_matrix,
+                    annotation_text=transposed_swapped_columns_conf_matrix,
+                    customdata=transposed_swapped_columns_conf_matrix,
                 )
 
                 # Add custom annotations to the figure
@@ -581,7 +580,7 @@ if file is not None:
 
                 # Customize the layout
                 fig.update_layout(
-                    title=f'Confusion Matrix ({dftype})',
+                    title=f' {dftype} Confusion Matrix ',
                     xaxis=dict(title='Predicted'),
                     yaxis=dict(title='Actual'),
                 )
@@ -589,8 +588,9 @@ if file is not None:
                 # Show the plot
                 st.plotly_chart(fig)
 
-            plot_conf_matrix(train_confusion, "Train")
-            plot_conf_matrix(test_confusion, "Test")
+            # Example usage
+            plot_swapped_columns_transposed_conf_matrix(train_confusion, "Train")
+            plot_swapped_columns_transposed_conf_matrix(test_confusion, "Test")
 
             print(f'Classification Report:\n{report}')
 
@@ -1071,7 +1071,6 @@ if file is not None:
                 KS_data['max_ks'] = np.where(KS_data['ks_stats'] == KS_data['ks_stats'].max(), 'Yes', '')
                 calculate_ks_statistics.max_ks = KS_data['ks_stats'].max()
 
-
                 # Calculate Gain and Lift.
                 KS_data['Gain'] = KS_data['Percent of ' + response_name + ' (%)'].cumsum()
                 KS_data['Lift'] = (KS_data['Gain'] / np.arange(10, 100 + 10, 10)).round(2)
@@ -1083,7 +1082,6 @@ if file is not None:
 
             st.subheader(f"{df_type} KS table")
             st.dataframe(ks_data)
-
             st.subheader(f" {df_type} KS: {calculate_ks_statistics.max_ks}")
 
             def model_selection_by_gain_chart(model_gains_dict):
@@ -1297,7 +1295,6 @@ if file is not None:
             color_discrete_map=color_mapping,
             category_orders={'churn_category': category_order},
         )
-
         # Add data labels to the bars
         fig.update_traces(texttemplate='%{y:.2f}%', textposition='auto')
 
