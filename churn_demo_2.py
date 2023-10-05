@@ -397,7 +397,7 @@ if file is not None:
             x='creditscore_slab',
             y='churn',
             markers=True,  # Enable markers
-            labels={'churn': 'churn Rate (%)'},
+            labels={'churn': 'churn Rate'},
             title=f'Credit score'
         )
 
