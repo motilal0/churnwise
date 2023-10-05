@@ -107,7 +107,7 @@ if file is not None:
             y='churn',
             markers=True,
             labels={'churn': 'Churn Rate '},
-            title='gender'
+            title='Gender'
         )
 
         fig.update_traces(line_color='blue')
@@ -135,7 +135,7 @@ if file is not None:
             y='churn',
             markers=True,
             labels={'churn': 'Churn Rate '},
-            title='geography'
+            title='Geography'
         )
 
         fig.update_traces(line_color='blue')
@@ -163,7 +163,7 @@ if file is not None:
             y='churn',
             markers=True,
             labels={'churn': 'Churn Rate '},
-            title='hascrcard'
+            title='Has credit card'
         )
 
         fig.update_traces(line_color='blue')
@@ -190,7 +190,7 @@ if file is not None:
             y='churn',
             markers=True,
             labels={'churn': 'Churn Rate '},
-            title='isactivemember'
+            title='Is active member'
         )
 
         fig.update_traces(line_color='blue')
@@ -328,7 +328,7 @@ if file is not None:
             y='churn',
             markers=True,  # Enable markers
             labels={'churn': 'churn Rate (%)'},
-            title=f'age'
+            title=f'Age'
         )
 
         fig1.update_traces(line_color='blue')  # Set the line color
@@ -369,7 +369,7 @@ if file is not None:
         salary_bins_churn_rate.head(15)
 
         # Create a line chart
-        fig = px.line(salary_bins_churn_rate, x='est_salary_slab', y='churn', title='salary',
+        fig = px.line(salary_bins_churn_rate, x='est_salary_slab', y='churn', title='Salary',
                       markers=True)
 
         # Customize the appearance (optional)
@@ -398,7 +398,7 @@ if file is not None:
             y='churn',
             markers=True,  # Enable markers
             labels={'churn': 'churn Rate (%)'},
-            title=f'creditscore'
+            title=f'Credit score'
         )
 
         fig.update_traces(line_color='blue')  # Set the line color
@@ -496,9 +496,8 @@ if file is not None:
 
             X_train = X_train.astype(convert_dict)
 
-
             X_test = X_test.astype(convert_dict)
-         
+
             fit_and_estimate.X_train_data = X_train
             fit_and_estimate.y_train_data = y_train
             fit_and_estimate.X_test_data = X_test
@@ -534,13 +533,64 @@ if file is not None:
             print(f'train confusion Matrix:\n{train_confusion}')
             print(f'test confusion Matrix:\n{test_confusion}')
 
-            ConfusionMatrixDisplay.from_estimator(log_reg_model, X_train, y_train)
-            plt.title('Train Confusion Matrix\n')
-            st.pyplot(plt)
+            def plot_conf_matrix(conf, dftype):
+                import plotly.figure_factory as ff
 
-            ConfusionMatrixDisplay.from_estimator(log_reg_model, X_test, y_test)
-            plt.title('Test Confusion Matrix\n')
-            st.pyplot(plt)
+                # Define the confusion matrix values
+                TP = conf[1, 1]
+                TN = conf[0, 0]
+                FP = conf[0, 1]
+                FN = conf[1, 0]
+
+                # Create a confusion matrix table
+                conf_matrix = [[TN, FP],
+                               [FN, TP]]
+
+                # Define colors for font based on TP, TN, FP, FN
+                font_colors = [['green', 'red'],
+                               ['red', 'green']]
+
+                # Create custom annotation text with font colors
+                annotations = []
+                for i in range(2):
+                    for j in range(2):
+                        label = 'TP' if i == 1 and j == 1 else 'TN' if i == 0 and j == 0 else 'FP' if i == 0 and j == 1 else 'FN'
+                        value = conf_matrix[i][j]
+                        font_color = font_colors[i][j]
+                        annotations.append(dict(
+                            x=j,
+                            y=i,
+                            text=f'{value}<br>{label}',
+                            showarrow=False,
+                            font=dict(color=font_color)
+                        ))
+
+                # Create a figure with custom annotations and color scale
+                fig = ff.create_annotated_heatmap(
+                    z=conf_matrix,
+                    x=['Predicted Negative', 'Predicted Positive'],
+                    y=['Actual Negative', 'Actual Positive'],
+                    colorscale=[[0, 'beige'], [1, '#94CCFB']],
+                    showscale=False,  # No color scale
+                    annotation_text=conf_matrix,
+                    customdata=conf_matrix,
+                )
+
+                # Add custom annotations to the figure
+                fig.update_layout(annotations=annotations)
+
+                # Customize the layout
+                fig.update_layout(
+                    title=f'Confusion Matrix ({dftype})',
+                    xaxis=dict(title='Predicted'),
+                    yaxis=dict(title='Actual'),
+                )
+
+                # Show the plot
+                st.plotly_chart(fig)
+
+            plot_conf_matrix(train_confusion, "Train")
+            plot_conf_matrix(test_confusion, "Test")
 
             print(f'Classification Report:\n{report}')
 
@@ -658,6 +708,10 @@ if file is not None:
                 "geography_5": "Madhya Pradesh",
                 "geography_6": "Maharashtra",
                 "geography_7": "Andhra Pradesh",
+                "isactivemember": "is active member",
+                "hascrcard":"has credit card",
+                "numofproducts": "num of products",
+
             }
             # Use the .rename() function to replace index labels
             features = features.rename(columns=geography_mapping)
@@ -1009,14 +1063,14 @@ if file is not None:
                 KS_data['Percent of ' + response_name + ' (%)'] = (
                         (KS_data['success_count'] / KS_data['success_count'].sum()) * 100).round(2)
                 KS_data['Percent of Non-' + response_name + ' (%)'] = (
-                            (KS_data['Number of Non-' + response_name] / KS_data[
-                                'Number of Non-' + response_name].sum()) * 100).round(2)
+                        (KS_data['Number of Non-' + response_name] / KS_data[
+                            'Number of Non-' + response_name].sum()) * 100).round(2)
                 KS_data['ks_stats'] = ((KS_data['Percent of ' + response_name + ' (%)'].cumsum() - KS_data[
                     'Percent of Non-' + response_name + ' (%)'].cumsum()).round(4)).astype(float)
 
                 KS_data['max_ks'] = np.where(KS_data['ks_stats'] == KS_data['ks_stats'].max(), 'Yes', '')
-                max_ks=KS_data['ks_stats'].max()
-                st.subheader(f" {df_type} KS: {max_ks}")
+                calculate_ks_statistics.max_ks = KS_data['ks_stats'].max()
+
 
                 # Calculate Gain and Lift.
                 KS_data['Gain'] = KS_data['Percent of ' + response_name + ' (%)'].cumsum()
@@ -1029,6 +1083,8 @@ if file is not None:
 
             st.subheader(f"{df_type} KS table")
             st.dataframe(ks_data)
+
+            st.subheader(f" {df_type} KS: {calculate_ks_statistics.max_ks}")
 
             def model_selection_by_gain_chart(model_gains_dict):
                 fig = go.Figure()
@@ -1241,6 +1297,9 @@ if file is not None:
             color_discrete_map=color_mapping,
             category_orders={'churn_category': category_order},
         )
+
+        # Add data labels to the bars
+        fig.update_traces(texttemplate='%{y:.2f}%', textposition='auto')
 
         st.plotly_chart(fig)
 
