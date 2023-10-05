@@ -403,7 +403,7 @@ if file is not None:
 
         fig.update_traces(line_color='blue')  # Set the line color
         fig.update_xaxes(title_text='creditscore_slab')
-        fig.update_yaxes(title_text='churn Rate (%)')
+        fig.update_yaxes(title_text='churn Rate')
         st.plotly_chart(fig)
 
         #
