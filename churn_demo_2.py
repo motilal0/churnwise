@@ -327,13 +327,13 @@ if file is not None:
             x='age_slab',
             y='churn',
             markers=True,  # Enable markers
-            labels={'churn': 'churn Rate (%)'},
+            labels={'churn': 'churn Rate'},
             title=f'Age'
         )
 
         fig1.update_traces(line_color='blue')  # Set the line color
         fig1.update_xaxes(title_text='age_slab')
-        fig1.update_yaxes(title_text='churn Rate (%)')
+        fig1.update_yaxes(title_text='churn Rate')
         # Set the y-axis range and tick interval
         fig1.update_yaxes(
             # range=[0, 100],  # Set the range from 0 to 100
@@ -374,7 +374,7 @@ if file is not None:
 
         # Customize the appearance (optional)
         fig.update_xaxes(title_text='est_salary_slab')
-        fig.update_yaxes(title_text='churn Rate (%)')
+        fig.update_yaxes(title_text='churn Rate')
 
         # Display the chart
         st.plotly_chart(fig)
