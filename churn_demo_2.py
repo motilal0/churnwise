@@ -1239,6 +1239,28 @@ if file is not None:
 
         # p(Y)= 1/1+e^-(c1f+c2f...)
         #   Score = c +c1f + c2f + c3f
+        # mapping categorical variables
+        gender_mapping = {'Male': 0, 'Female': 1}
+        # Create a dictionary to map geography values to numerical values
+        geography_mapping = {
+
+            "Bihar": 1,
+            "Goa": 2,
+            "Gujarat": 3,
+            "Kerala": 4,
+            "Madhya Pradesh": 5,
+            "Maharashtra": 6,
+            "Andhra Pradesh": 7
+        }
+
+        generated_data = generated_data.copy()
+        generated_data['gender'] = generated_data['gender'].map(gender_mapping)
+        # Use the map function to apply the mapping to the 'geography' column
+        generated_data['geography'] = generated_data['geography'].map(geography_mapping)
+        # Transform the Categorical Variables: Creating Dummy Variables
+        generated_data = pd.get_dummies(generated_data, columns=['geography'])
+        print("generated_data")
+
         coefficient = fit_and_estimate.coefficient.astype(str).astype(float).iloc[:-1]
 
 
