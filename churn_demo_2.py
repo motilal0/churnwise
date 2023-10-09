@@ -403,7 +403,7 @@ if file is not None:
 
         fig.update_traces(line_color='blue')  # Set the line color
         fig.update_xaxes(title_text='creditscore_slab')
-        fig.update_yaxes(title_text='churn Rate')
+        fig.update_yaxes(title_text='churn Rate (%)')
         st.plotly_chart(fig)
 
         #
@@ -1253,7 +1253,7 @@ if file is not None:
             "Andhra Pradesh": 7
         }
 
-        # generated_data = generated_data.copy()
+        generated_data = generated_data.copy()
         generated_data['gender'] = generated_data['gender'].map(gender_mapping)
         # Use the map function to apply the mapping to the 'geography' column
         generated_data['geography'] = generated_data['geography'].map(geography_mapping)
@@ -1284,8 +1284,8 @@ if file is not None:
 
         score_data['churn_prob'] = 1 / score_data['X']
         # IF(J2>0.7,"High",IF(J2>0.4,"Medium","Low"))
-        # score_data['churn_category'] = score_data['churn_prob'].apply(
-            # lambda x: "High" if x > 0.7 else ("Medium" if x > 0.4 else "Low"))
+        score_data['churn_category'] = score_data['churn_prob'].apply(
+            lambda x: "High" if x > 0.7 else ("Medium" if x > 0.4 else "Low"))
 
         score_data['churn_category'] = score_data['churn_prob'].apply(
             lambda x: "High" if x > 0.7 else ("Medium" if x > 0.4 else "Low"))
