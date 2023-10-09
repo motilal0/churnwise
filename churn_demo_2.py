@@ -906,6 +906,7 @@ if file is not None:
 
             ########################################################################################
             # variation between test and train estimates
+            coefficients_train = log_reg_model.coef_[0]
 
             coef_train_df = pd.DataFrame({'Variable': X_train.columns, 'Coefficient_Train': coefficients_train})
             print(coef_train_df)
@@ -1253,12 +1254,12 @@ if file is not None:
             "Andhra Pradesh": 7
         }
 
-        generated_data = generated_data.copy()
-        generated_data['gender'] = generated_data['gender'].map(gender_mapping)
+        score_data = generated_data.copy()
+        score_data['gender'] = score_data['gender'].map(gender_mapping)
         # Use the map function to apply the mapping to the 'geography' column
-        generated_data['geography'] = generated_data['geography'].map(geography_mapping)
+        score_data['geography'] = score_data['geography'].map(geography_mapping)
         # Transform the Categorical Variables: Creating Dummy Variables
-        generated_data = pd.get_dummies(generated_data, columns=['geography'])
+        score_data = pd.get_dummies(score_data, columns=['geography'])
         print("generated_data")
 
         coefficient = fit_and_estimate.coefficient.astype(str).astype(float).iloc[:-1]
@@ -1269,8 +1270,8 @@ if file is not None:
 
 
         # Apply the function to each row of the DataFrame
-        score_data = generated_data.copy()
-        score_data = score_data.drop(['churn', 'estimatedsalary', 'balance'], axis=1)
+        cust_id_index=score_data['customer_id']
+        score_data = score_data.drop(['customer_id', 'estimatedsalary', 'balance'], axis=1)
 
         # score_data = score_data.drop('intercept', axis=1)
 
@@ -1292,14 +1293,10 @@ if file is not None:
 
         print(set(score_data['churn_category'].to_list()))
 
-        df = score_data.copy()
-        df['customer_id'] = ['C' + str(i) for i in range(1, len(df) + 1)]
-        df.set_index('customer_id', inplace=True)
-
-        columns_to_drop = ['CxF', 'X']
-        score_data_op = df.drop(columns=columns_to_drop)
         category_percentages = (score_data['churn_category'].value_counts(normalize=True) * 100).reset_index()
         category_percentages.columns = ['churn_category', 'percentage']  # Set column names
+        score_data.insert(0, 'customer_id', cust_id_index)
+
 
         # Define color mapping for categories
         color_mapping = {'Low': 'green', 'Medium': 'yellow', 'High': 'red'}
@@ -1322,9 +1319,14 @@ if file is not None:
 
         st.plotly_chart(fig)
 
+        # Merge 'score_data' columns into 'generated_data' based on 'customer_id'
+        final_op=generated_data = generated_data.merge(score_data[['customer_id','churn_prob', 'churn_category']], on='customer_id', how='left')
+        final_op.set_index('customer_id', inplace=True)
+
+
     st.download_button(
         "Click to Download",
-        pd.DataFrame(score_data_op).sort_values(by = 'churn_prob', ascending = False).to_csv(),
+        pd.DataFrame(final_op).sort_values(by = 'churn_prob', ascending = False).to_csv(),
         "scored_customers.csv",
         "text/csv",
         key='download-csv'
