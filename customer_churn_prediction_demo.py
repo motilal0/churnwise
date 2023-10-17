@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import make_classification
 import streamlit as st
-import shap
+# import shap
 
 
 churn_data = pd.read_csv(r"./Churn_Modelling.csv")
