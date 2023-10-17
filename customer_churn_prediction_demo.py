@@ -25,6 +25,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import make_classification
 import streamlit as st
+import shap
+
 
 churn_data = pd.read_csv(r"./Churn_Modelling.csv")
 # churn_data = pd.read_csv(r"C:/Users/shreyasaraf/PycharmProjects/Churn Project/New folder/churn-pred/Churn_Modelling.csv")
@@ -1428,7 +1430,6 @@ if file is not None:
         # Show the ROC curve
         st.plotly_chart(roc_curve_fig)
 
-        import shap
 
         explainer = shap.Explainer(rf_best)
         shap_values = explainer.shap_values(X_test)
