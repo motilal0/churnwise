@@ -26,8 +26,8 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import make_classification
 import streamlit as st
 
-churn_data = pd.read_csv(r"./Churn_Modelling.csv")
-# churn_data = pd.read_csv(r"C:/Users/shreyasaraf/PycharmProjects/Churn Project/New folder/churn-pred/Churn_Modelling.csv")
+#churn_data = pd.read_csv(r"./Churn_Modelling.csv")
+churn_data = pd.read_csv(r"C:/Users/shreyasaraf/PycharmProjects/Churn Project/New folder/churn-pred/Churn_Modelling.csv")
 
 #    churn_data
 
@@ -475,6 +475,7 @@ if file is not None:
         # ### Model Building
 
         # #### Logistic Regression
+        st.header('Logistic Regression Model')
 
         def fit_and_estimate(X, y):
 
@@ -1167,6 +1168,291 @@ if file is not None:
 
             print(f"after removing all: {model.summary().tables[1]}")
             return sig_features
+        
+
+        #Random Forest
+        st.header('Random Forest Model')
+        # Importing the required libraries
+        import pandas as pd, numpy as np
+        import matplotlib.pyplot as plt, seaborn as sns
+        
+        geography_mapping = {
+
+            "geography_1": "Bihar",
+            "geography_2": "Goa",
+            "geography_3": "Gujarat",
+            "geography_4": "Kerala",
+            "geography_5": "Madhya Pradesh",
+            "geography_6": "Maharashtra",
+            "geography_7": "Andhra Pradesh",
+            "isactivemember": "is active member",
+            "hascrcard":"has credit card",
+            "numofproducts": "num of products",
+
+        }
+        # Use the .rename() function to replace index labels
+        churn_mapped_data = churn_mapped_data.rename(columns=geography_mapping)
+        # Putting feature variable to X
+        X = churn_mapped_data.drop('churn',axis=1)
+        # Putting response variable to y
+        y = churn_mapped_data['churn']
+
+        # now lets split the data into train and test
+        from sklearn.model_selection import train_test_split
+        # Splitting the data into train and test
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, random_state=42)
+        
+
+
+        from sklearn.ensemble import RandomForestClassifier
+        classifier_rf = RandomForestClassifier(random_state=42, n_jobs=-1, max_depth=5,
+                                            n_estimators=100, oob_score=True)
+
+
+        classifier_rf.fit(X_train, y_train)
+
+
+        # Predict on the test set results
+
+        y_pred_train = classifier_rf.predict(X_train)
+        y_pred_test = classifier_rf.predict(X_test)
+
+
+        print('Accuracy before Hyperparameter tuning')
+        # Check accuracy score 
+        print('Train  accuracy score  : {0:0.4f}'. format(accuracy_score(y_train, y_pred_train)))
+        print('Test Model accuracy score  : {0:0.4f}'. format(accuracy_score(y_test, y_pred_test)))
+
+        # #Hyperprameter Tuning
+        rf = RandomForestClassifier(random_state=42, n_jobs=-1)
+        params = {
+            'max_depth': [2,3,5,10,20],
+            'min_samples_leaf': [5,10,20,50,100,200],
+            'n_estimators': [10,25,30,50,100,200]
+        }
+        
+        rf_best = RandomForestClassifier(max_depth=20, min_samples_leaf=5, n_estimators=50,
+                        n_jobs=-1, random_state=42)
+        # print(f"best grid estimates {rf_best}\n")
+
+
+        # fitting after hyperparameter tuning
+
+        rf_best.fit(X_train, y_train)
+        # fitting after hyperparameter tuning
+
+        y_pred_train2 = rf_best.predict(X_train)
+        y_pred_test2 = rf_best.predict(X_test)
+
+
+        # Check accuracy score 
+        st.write('Train Model accuracy : {0:0.4f}'. format(accuracy_score(y_train, y_pred_train2)))
+        st.write('Test Model accuracy  : {0:0.4f}'. format(accuracy_score(y_test, y_pred_test2)))
+
+        import plotly.express as px
+
+
+        features = X_train.copy()
+
+
+        feature_scores = pd.Series(rf_best.feature_importances_, index=features.columns)
+
+
+
+        # Create a DataFrame for plotting
+        feature_scores_df = pd.DataFrame({'Features': feature_scores.index, 'Scores': feature_scores.values})
+        # Ensure that the DataFrame is sorted in descending order
+        feature_scores_df = feature_scores_df.sort_values(by='Scores', ascending=False)
+
+
+
+
+        # Create a horizontal bar chart using Plotly
+        fig = px.bar(
+            feature_scores_df,
+            x='Scores',
+            y='Features',
+            orientation='h',
+            title='Feature Importance Scores',
+            category_orders={"Features": feature_scores_df['Features'].values},
+            text='Scores',  # Display the scores as labels
+        )
+        fig.update_layout(xaxis_title='Score', yaxis_title='Features')
+        fig.update_traces(texttemplate='%{text:.3f}', textposition='outside')
+
+
+        st.plotly_chart(fig)
+
+        from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+        y_true = y_test  # Replace with your actual labels
+
+
+        accuracy = accuracy_score(y_true, y_pred_test2)
+        precision = precision_score(y_true, y_pred_test2)
+        recall = recall_score(y_true, y_pred_test2)
+        f1 = f1_score(y_true, y_pred_test2)
+
+        print("Accuracy:", accuracy)
+        print("Precision:", precision)
+        print("Recall:", recall)
+        print("F1-Score:", f1)
+        
+
+        y_pred_train2 = rf_best.predict(X_train)
+        train_confusion = confusion_matrix(y_train, y_pred_train2)
+        test_confusion = confusion_matrix(y_test, y_pred_test2)
+
+        report = classification_report(y_test, y_pred_test2)
+        print(f"classification report: {report}")
+
+
+        print(f'train confusion Matrix:\n{train_confusion}')
+        print(f'test confusion Matrix:\n{test_confusion}')
+
+        def plot_swapped_columns_transposed_conf_matrix(conf, dftype):
+            import plotly.figure_factory as ff
+            import numpy as np
+
+            # Swap columns in the confusion matrix
+            swapped_columns_conf_matrix = np.array(conf)[:, [1, 0]].tolist()
+
+            # Transpose the swapped columns matrix
+            transposed_swapped_columns_conf_matrix = np.array(swapped_columns_conf_matrix).tolist()
+
+
+
+            # Define colors for font based on TP, TN, FP, FN
+            font_colors = [['red', 'green'],
+                            ['green', 'red']]
+
+            # Create custom annotation text with font colors for the transposed matrix
+            annotations = []
+            for i in range(2):
+                for j in range(2):
+                    label = 'TP' if i ==  1 and j == 0 else 'FP' if i == 0 and j == 0 else 'TN' if i == 0 and j == 1 else 'FN'
+                    value = transposed_swapped_columns_conf_matrix[i][j]
+                    font_color = font_colors[i][j]
+                    annotations.append(dict(
+                        x=j,
+                        y=i,
+                        text=f'{value}<br>{label}',
+                        showarrow=False,
+                        font=dict(color=font_color)
+                    ))
+
+           
+
+            # Create a figure with custom annotations and color scale for the transposed matrix
+            fig = ff.create_annotated_heatmap(
+                z=transposed_swapped_columns_conf_matrix,
+                x=['Predicted Positive', 'Predicted Negative'],
+                y=['Actual Negative', 'Actual Positive'],
+                colorscale=[[0, 'beige'], [1, '#94CCFB']],
+                showscale=False,  # No color scale
+                annotation_text=transposed_swapped_columns_conf_matrix,
+                customdata=transposed_swapped_columns_conf_matrix,
+            )
+
+            # Add custom annotations to the figure
+            fig.update_layout(annotations=annotations)
+
+            # Customize the layout
+            fig.update_layout(
+                
+                xaxis=dict(title='Predicted'),
+                yaxis=dict(title='Actual'),
+            )
+            st.subheader(f'{dftype} Confusion Matrix \n')
+            # Show the plot
+            st.plotly_chart(fig)
+
+        # Example usage
+        plot_swapped_columns_transposed_conf_matrix(train_confusion, "Train")
+        plot_swapped_columns_transposed_conf_matrix(test_confusion, "Test")
+
+        # Assuming you have a trained classifier rf_classifier and test data X_test, y_test
+        y_prob = rf_best.predict_proba(X_test)[:, 1]
+        fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+        roc_auc = auc(fpr, tpr)
+
+        roc_curve_fig = go.Figure()
+
+        # Add the ROC curve trace
+        roc_curve_fig.add_trace(
+            go.Scatter(x=fpr, y=tpr, mode='lines', name='ROC Curve (AUC = {:.2f})'.format(roc_auc))
+        )
+
+        # Add a diagonal line (random classifier)
+        roc_curve_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', line=dict(dash='dash'), name='Random Classifier'))
+
+        # Customize the layout
+        roc_curve_fig.update_layout(
+            title='Receiver Operating Characteristic (ROC) Curve',
+            xaxis_title='False Positive Rate (FPR)',
+            yaxis_title='True Positive Rate (TPR)',
+            legend=dict(x=0.02, y=0.98),
+            margin=dict(l=10, r=10, t=30, b=10),
+            autosize=True,
+        )
+
+        # Show the ROC curve
+        st.plotly_chart(roc_curve_fig)
+
+
+        # Assuming you have a trained classifier rf_classifier and test data X_test, y_test
+        y_prob_train = rf_best.predict_proba(X_train)[:, 1]
+        fpr, tpr, thresholds = roc_curve(y_train, y_prob_train)
+        roc_auc = auc(fpr, tpr)
+
+        roc_curve_fig = go.Figure()
+
+        # Add the ROC curve trace
+        roc_curve_fig.add_trace(
+            go.Scatter(x=fpr, y=tpr, mode='lines', name='ROC Curve (AUC = {:.2f})'.format(roc_auc))
+        )
+
+        # Add a diagonal line (random classifier)
+        roc_curve_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', line=dict(dash='dash'), name='Random Classifier'))
+
+        # Customize the layout
+        roc_curve_fig.update_layout(
+            title='Receiver Operating Characteristic (ROC) Curve',
+            xaxis_title='False Positive Rate (FPR)',
+            yaxis_title='True Positive Rate (TPR)',
+            legend=dict(x=0.02, y=0.98),
+            margin=dict(l=10, r=10, t=30, b=10),
+            autosize=True,
+        )
+
+        # Show the ROC curve
+        st.plotly_chart(roc_curve_fig)
+
+        import shap
+
+        explainer = shap.Explainer(rf_best)
+        shap_values = explainer.shap_values(X_test)
+        #The SHAP values represent the contribution of each feature to the prediction made by the model for each instance in X_test.
+        shap.summary_plot(shap_values, X_test,  max_display=12)
+
+        fig, ax = plt.gcf(), plt.gca()
+        
+
+        st.pyplot(fig)
+
+        shap.summary_plot(shap_values[0], X_test)
+        #Display the summary_plot of the label “0”.
+        fig, ax = plt.gcf(), plt.gca()
+        st.pyplot(fig)
+
+        shap.plots.force(explainer.expected_value[1], shap_values[1][10, :], X_test.iloc[10, :],matplotlib = True)
+        fig, ax = plt.gcf(), plt.gca()
+        st.pyplot(fig)
+
+
+
+
+        
 
     with tab1:
 
