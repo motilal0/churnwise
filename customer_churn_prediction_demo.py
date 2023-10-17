@@ -482,7 +482,7 @@ if file is not None:
         def fit_and_estimate(X, y):
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=40)
-            print(X_train.shape, X_test.shape)
+            # print(X_train.shape, X_test.shape)
 
             print('datatypes')
             # using dictionary to convert specific columns
@@ -625,10 +625,10 @@ if file is not None:
                 labels=dict(x='False Positive Rate', y='True Positive Rate'),
                 width=700, height=500
             )
-            fig.add_shape(
-                type='line', line=dict(dash='dash'),
-                x0=0, x1=1, y0=0, y1=1
-            )
+            # fig.add_shape(
+                # type='line', line=dict(dash='dash'),
+                # x0=0, x1=1, y0=0, y1=1
+            # )
 
             fig.update_yaxes(scaleanchor="x", scaleratio=1)
             fig.update_xaxes(constrain='domain')
@@ -645,10 +645,10 @@ if file is not None:
                 labels=dict(x='False Positive Rate', y='True Positive Rate'),
                 width=700, height=500
             )
-            fig.add_shape(
-                type='line', line=dict(dash='dash'),
-                x0=0, x1=1, y0=0, y1=1
-            )
+            # fig.add_shape(
+                # type='line', line=dict(dash='dash'),
+                # x0=0, x1=1, y0=0, y1=1
+            # )
 
             fig.update_yaxes(scaleanchor="x", scaleratio=1)
             fig.update_xaxes(constrain='domain')
@@ -658,8 +658,8 @@ if file is not None:
 
             # Define and fit model
             sm_Log_model = sm.Logit(y_train, X_train).fit()
-            print('x_train shape')
-            print(X_train.shape, y_train.shape)
+            # print('x_train shape')
+            # print(X_train.shape, y_train.shape)
             print('dtype')
             print(X_train.dtypes)
             print(y_train.dtypes)
@@ -860,10 +860,10 @@ if file is not None:
                 labels=dict(x='False Positive Rate', y='True Positive Rate'),
                 width=700, height=500
             )
-            fig.add_shape(
-                type='line', line=dict(dash='dash'),
-                x0=0, x1=1, y0=0, y1=1
-            )
+            # fig.add_shape(
+                # type='line', line=dict(dash='dash'),
+                # x0=0, x1=1, y0=0, y1=1
+            # )
 
             fig.update_yaxes(scaleanchor="x", scaleratio=1)
             fig.update_xaxes(constrain='domain')
@@ -873,8 +873,8 @@ if file is not None:
 
             # Define and fit model
             sm_Log_model = sm.Logit(y_train, X_train).fit()
-            print('x_train shape')
-            print(X_train.shape, y_train.shape())
+            # print('x_train shape')
+            # print(X_train.shape, y_train.shape())
             print('dtype')
             print(X_train.dtypes)
             print(y_train.dtypes)
@@ -1431,22 +1431,22 @@ if file is not None:
         st.plotly_chart(roc_curve_fig)
 
 
-        explainer = shap.Explainer(rf_best)
-        shap_values = explainer.shap_values(X_test)
+        # explainer = shap.Explainer(rf_best)
+        # shap_values = explainer.shap_values(X_test)
         #The SHAP values represent the contribution of each feature to the prediction made by the model for each instance in X_test.
-        shap.summary_plot(shap_values, X_test,  max_display=12)
+        # shap.summary_plot(shap_values, X_test,  max_display=12)
 
         fig, ax = plt.gcf(), plt.gca()
         
 
         st.pyplot(fig)
 
-        shap.summary_plot(shap_values[0], X_test)
+        # shap.summary_plot(shap_values[0], X_test)
         #Display the summary_plot of the label “0”.
         fig, ax = plt.gcf(), plt.gca()
         st.pyplot(fig)
 
-        shap.plots.force(explainer.expected_value[1], shap_values[1][10, :], X_test.iloc[10, :],matplotlib = True)
+        # shap.plots.force(explainer.expected_value[1], shap_values[1][10, :], X_test.iloc[10, :],matplotlib = True)
         fig, ax = plt.gcf(), plt.gca()
         st.pyplot(fig)
 
