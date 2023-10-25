@@ -14,8 +14,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
 import warnings
-warnings.filterwarnings("ignore")
-
 import random
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.pipeline import Pipeline
@@ -52,8 +50,8 @@ from scipy.spatial.distance import cdist
 
 
 
-#churn_data = pd.read_csv(r"./Churn_Modelling.csv")
-churn_data = pd.read_csv(r"C:/Users/shreyasaraf/PycharmProjects/Churn Project/New folder/churn-pred/Churn_Modelling.csv")
+churn_data = pd.read_csv(r"./Churn_Modelling.csv")
+#churn_data = pd.read_csv(r"C:/Users/shreyasaraf/PycharmProjects/Churn Project/New folder/churn-pred/Churn_Modelling.csv")
 
 #    churn_data
 
@@ -722,18 +720,17 @@ if file is not None:
 
         # Plot outliers
         outlier_data = X_pca[metrics_df['anomaly'] == -1]
-        fig.add_trace(go.Scatter(x=outlier_data[:, 0], y=outlier_data[:, 1], mode='markers', name='anomalies', marker=dict(color='red')))
-
+        fig.add_trace(go.Scatter(x=outlier_data[:, 0], y=outlier_data[:, 1], mode='markers', name='anomalies'))
 
         # Set layout properties
         fig.update_layout(
-            title="Outliers Detected by Isolation Forest for Train  ",
+            title="Outliers Detected by Isolation Forest",
             xaxis_title="Principal Component 1",
             yaxis_title="Principal Component 2"
         )
 
         # Show the plot
-        st.plotly_chart(fig)
+        # fig.show()
         # Find the number of anomalies and normal points
 
         #Test
@@ -775,20 +772,18 @@ if file is not None:
         fig.add_trace(go.Scatter(x=normal_data[:, 0], y=normal_data[:, 1], mode='markers', name='normal points'))
 
         # Plot outliers
-        # Plot outliers in red
         outlier_data = X_pca[metrics_df['anomaly'] == -1]
-        fig.add_trace(go.Scatter(x=outlier_data[:, 0], y=outlier_data[:, 1], mode='markers', name='anomalies', marker=dict(color='red')))
-
+        fig.add_trace(go.Scatter(x=outlier_data[:, 0], y=outlier_data[:, 1], mode='markers', name='anomalies'))
 
         # Set layout properties
         fig.update_layout(
-            title="Outliers Detected by Isolation Forest for Test  ",
+            title="Outliers Detected by Isolation Forest",
             xaxis_title="Principal Component 1",
             yaxis_title="Principal Component 2"
         )
 
         # Show the plot
-        st.plotly_chart(fig)
+        # fig.show()
         # Find the number of anomalies and normal points
 
 
@@ -1009,45 +1004,13 @@ if file is not None:
 
 
             "Train K Fold cross validation"
-            fold_accuracies = []
-
             # Print the accuracy scores for each fold
             for fold, accuracy in enumerate(cross_val_scores, start=1):
-                 fold_accuracies.append(f'Fold {fold}: Accuracy = {accuracy:.2f}')
-            
-            # Group the fold accuracies in pairs for each row
-            fold_rows = [fold_accuracies[i:i+2] for i in range(0, len(fold_accuracies), 2)]
-
-            # Join the fold accuracy pairs in each row with spaces
-            for row in fold_rows:
-                st.write('    '.join(row))
+                f'Fold {fold}: Accuracy = {accuracy:.2f}'
 
             # Calculate and print the mean accuracy
             mean_accuracy = np.mean(cross_val_scores)
-            f'Train Mean Accuracy: {mean_accuracy:.2f}\n\n'
-
-            cross_val_scores = cross_val_score(model, X_test, y_test, cv=k, scoring='accuracy')
-
-
-            "Test K Fold cross validation"
-            fold_accuracies = []
-
-            # Print the accuracy scores for each fold
-            for fold, accuracy in enumerate(cross_val_scores, start=1):
-                 fold_accuracies.append(f'Fold {fold}: Accuracy = {accuracy:.2f}')
-
-            # Group the fold accuracies in pairs for each row
-            fold_rows = [fold_accuracies[i:i+2] for i in range(0, len(fold_accuracies), 2)]
-
-            # Join the fold accuracy pairs in each row with spaces
-            for row in fold_rows:
-                st.write('    '.join(row))
-            # Calculate and print the mean accuracy
-            mean_accuracy = np.mean(cross_val_scores)
-            f'Test Mean Accuracy: {mean_accuracy:.2f}\n\n'
-
-
-
+            f'Mean Accuracy: {mean_accuracy:.2f}\n\n'
 
         random_forest_pipeline=calc_Kfold(RandomForestClassifier(max_depth=20, min_samples_leaf=5, n_estimators=50,
                             n_jobs=-1, random_state=42))
@@ -1179,8 +1142,6 @@ if file is not None:
         # Show the Plotly figure
         st.plotly_chart(fig)
 
-
-        
 
 
 
