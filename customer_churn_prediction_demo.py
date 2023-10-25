@@ -8,28 +8,50 @@
 
 import pandas as pd
 import numpy as np
-import random
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.graph_objects as go
 import plotly.express as px
-import statsmodels.api as sm
+import plotly.io as pio
+import warnings
+import random
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.pipeline import Pipeline
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import IsolationForest
+from sklearn.ensemble import BaggingClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score
+from sklearn import model_selection
+from sklearn.svm import SVC
+from sklearn.decomposition import PCA
+from sklearn.neural_network import MLPClassifier
+import tensorflow as tf
+from tensorflow import keras
+from keras.models import Sequential
+from keras.layers import Dense
+from yellowbrick.cluster import SilhouetteVisualizer
+import statsmodels.api as sm
+from sklearn.cluster import KMeans
+from sklearn import metrics
+from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import GradientBoostingClassifier
 
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import train_test_split
-
 from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import make_classification
 import streamlit as st
-# import shap
+from scipy.spatial.distance import cdist
+
 
 
 churn_data = pd.read_csv(r"./Churn_Modelling.csv")
-# churn_data = pd.read_csv(r"C:/Users/shreyasaraf/PycharmProjects/Churn Project/New folder/churn-pred/Churn_Modelling.csv")
+#churn_data = pd.read_csv(r"C:/Users/shreyasaraf/PycharmProjects/Churn Project/New folder/churn-pred/Churn_Modelling.csv")
 
 #    churn_data
 
@@ -93,7 +115,7 @@ if file is not None:
     churn_data_summary = churn_data.describe()
     print(churn_data_summary)
 
-    # ##### creation of tabs
+    # ##### creation of tabs.
     tab1, tab2, tab3 = st.tabs(["Scoring", "Model Dev and Validation", "EDA"])
 
     with tab3:
@@ -476,841 +498,437 @@ if file is not None:
     with tab2:
         # ### Model Building
 
-        # #### Logistic Regression
-        st.header('Logistic Regression Model')
+        # #### Splitting Data
 
-        def fit_and_estimate(X, y):
-
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=40)
-            # print(X_train.shape, X_test.shape)
-
-            print('datatypes')
-            # using dictionary to convert specific columns
-
-            convert_dict = {'geography_1': int,
-                            'geography_2': int,
-                            'geography_3': int,
-                            'geography_4': int,
-                            'geography_5': int,
-                            'geography_6': int,
-                            'geography_7': int
-
-                            }
-
-            X_train = X_train.astype(convert_dict)
-
-            X_test = X_test.astype(convert_dict)
-
-            fit_and_estimate.X_train_data = X_train
-            fit_and_estimate.y_train_data = y_train
-            fit_and_estimate.X_test_data = X_test
-
-            ###############################################################################################
-            #########fitting the model
-
-            # Create a logistic regression model
-            log_reg_model = LogisticRegression()
-            # Fit the model to the training data to estimate parameters
-            log_reg_model.fit(X_train, y_train)
-
-            fit_and_estimate.log_reg_model = log_reg_model
-            # Make predictions on the test set
-            y_pred_train = log_reg_model.predict(X_train)
-            y_pred = log_reg_model.predict(X_test)
-
-            # Evaluate the log_reg_model
-            train_accuracy = accuracy_score(y_train, y_pred_train)
-            test_accuracy = accuracy_score(y_test, y_pred)
-
-            train_confusion = confusion_matrix(y_train, y_pred_train)
-            test_confusion = confusion_matrix(y_test, y_pred)
-
-            report = classification_report(y_test, y_pred)
-
-            print(f'Train Accuracy: {train_accuracy}')
-            print(f'Test Accuracy: {test_accuracy}')
-
-            st.subheader(f'Train Accuracy: {train_accuracy}')
-            st.subheader(f'Test Accuracy: {test_accuracy}')
-
-            print(f'train confusion Matrix:\n{train_confusion}')
-            print(f'test confusion Matrix:\n{test_confusion}')
-
-            def plot_swapped_columns_transposed_conf_matrix(conf, dftype):
-                import plotly.figure_factory as ff
-                import numpy as np
-
-                # Swap columns in the confusion matrix
-                swapped_columns_conf_matrix = np.array(conf)[:, [1, 0]].tolist()
-
-                # Transpose the swapped columns matrix
-                transposed_swapped_columns_conf_matrix = np.array(swapped_columns_conf_matrix).tolist()
-
-
-
-                # Define colors for font based on TP, TN, FP, FN
-                font_colors = [['red', 'green'],
-                               ['green', 'red']]
-
-                # Create custom annotation text with font colors for the transposed matrix
-                annotations = []
-                for i in range(2):
-                    for j in range(2):
-                        label = 'TP' if i ==  1 and j == 0 else 'FP' if i == 0 and j == 0 else 'TN' if i == 0 and j == 1 else 'FN'
-                        value = transposed_swapped_columns_conf_matrix[i][j]
-                        font_color = font_colors[i][j]
-                        annotations.append(dict(
-                            x=j,
-                            y=i,
-                            text=f'{value}<br>{label}',
-                            showarrow=False,
-                            font=dict(color=font_color)
-                        ))
-
-                # Create a figure with custom annotations and color scale for the transposed matrix
-                fig = ff.create_annotated_heatmap(
-                    z=transposed_swapped_columns_conf_matrix,
-                    x=['Predicted Positive', 'Predicted Negative'],
-                    y=['Actual Negative', 'Actual Positive'],
-                    colorscale=[[0, 'beige'], [1, '#94CCFB']],
-                    showscale=False,  # No color scale
-                    annotation_text=transposed_swapped_columns_conf_matrix,
-                    customdata=transposed_swapped_columns_conf_matrix,
-                )
-
-                # Add custom annotations to the figure
-                fig.update_layout(annotations=annotations)
-
-                # Customize the layout
-                fig.update_layout(
-                    title=f' {dftype} Confusion Matrix ',
-                    xaxis=dict(title='Predicted'),
-                    yaxis=dict(title='Actual'),
-                )
-
-                # Show the plot
-                st.plotly_chart(fig)
-
-            # Example usage
-            plot_swapped_columns_transposed_conf_matrix(train_confusion, "Train")
-            plot_swapped_columns_transposed_conf_matrix(test_confusion, "Test")
-
-            print(f'Classification Report:\n{report}')
-
-            #######################################################################################
-            # predicted proba
-            features = X_train.columns.to_list()
-
-            train_ks_table = X_train.copy()
-            train_ks_table['lg_predicted_probability'] = log_reg_model.predict_proba(X_train[features])[:,
-                                                         1]  # Predicted Proba for churn(=1)
-            train_ks_table['churn'] = y_train  # Ground Truth
-            fit_and_estimate.train_ks_table = train_ks_table
-
-            test_ks_table = X_test.copy()
-            test_ks_table['lg_predicted_probability'] = log_reg_model.predict_proba(X_test[features])[:,
-                                                        1]  # Predicted Proba for churn(=1)
-            test_ks_table['churn'] = y_test  # Ground Truth
-            fit_and_estimate.test_ks_table = test_ks_table
-
-            ########################################################################################
-            # train roc curve
-
-            y_score = log_reg_model.predict_proba(X_train)[:, 1]
-            fpr, tpr, thresholds = roc_curve(y_train, y_score)
-
-            fig = px.area(
-                x=fpr, y=tpr,
-                title=f'Train: ROC Curve (AUC={auc(fpr, tpr):.4f})',
-                labels=dict(x='False Positive Rate', y='True Positive Rate'),
-                width=700, height=500
-            )
-            # fig.add_shape(
-                # type='line', line=dict(dash='dash'),
-                # x0=0, x1=1, y0=0, y1=1
-            # )
-
-            fig.update_yaxes(scaleanchor="x", scaleratio=1)
-            fig.update_xaxes(constrain='domain')
-            st.plotly_chart(fig)
-
-            # test roc curve
-
-            y_score = log_reg_model.predict_proba(X_test)[:, 1]
-            fpr, tpr, thresholds = roc_curve(y_test, y_score)
-
-            fig = px.area(
-                x=fpr, y=tpr,
-                title=f'Test: ROC Curve (AUC={auc(fpr, tpr):.4f})',
-                labels=dict(x='False Positive Rate', y='True Positive Rate'),
-                width=700, height=500
-            )
-            # fig.add_shape(
-                # type='line', line=dict(dash='dash'),
-                # x0=0, x1=1, y0=0, y1=1
-            # )
-
-            fig.update_yaxes(scaleanchor="x", scaleratio=1)
-            fig.update_xaxes(constrain='domain')
-            st.plotly_chart(fig)
-
-            ########################################################################################
-
-            # Define and fit model
-            sm_Log_model = sm.Logit(y_train, X_train).fit()
-            # print('x_train shape')
-            # print(X_train.shape, y_train.shape)
-            print('dtype')
-            print(X_train.dtypes)
-            print(y_train.dtypes)
-
-            log_reg_summary = sm_Log_model.summary()
-
-            # Convert the summary to a DataFrame
-            train_data_estimate = pd.DataFrame(log_reg_summary.tables[1])
-
-            # Set the column names to the first row of the DataFrame
-            train_data_estimate.columns = train_data_estimate.iloc[0]
-
-            # Drop the first row (which contains the column names)
-            train_data_estimate = train_data_estimate[1:]
-
-            # Reset the index
-            train_data_estimate = train_data_estimate.reset_index(drop=True)
-            print(f"\n train data estimate:\n")
-            # Summary of results
-            print(sm_Log_model.summary())
-            # st.subheader("Parameter estimate Table:\n")
-            # st.table(train_data_estimate)
-
-            ########################################################################################
-            # Create a DataFrame to store the parameter estimates
-
-            test_parameter_estimate_table = pd.DataFrame(
-                {'Variable': X_test.columns, 'Coefficient': sm_Log_model.params.values})
-
-            # Display the parameter estimate table
-            print(f"\n test_parameter_estimate_table: \n{test_parameter_estimate_table}")
-
-            ########################################################################################
-            # variation between test and train estimates
-
-            coefficients_train = log_reg_model.coef_[0]
-
-            coefficients_train = log_reg_model.coef_[0]
-            print('columns_mop')
-
-            features = X_train.copy()
-
-            geography_mapping = {
-
-                "geography_1": "Bihar",
-                "geography_2": "Goa",
-                "geography_3": "Gujarat",
-                "geography_4": "Kerala",
-                "geography_5": "Madhya Pradesh",
-                "geography_6": "Maharashtra",
-                "geography_7": "Andhra Pradesh",
-                "isactivemember": "is active member",
-                "hascrcard":"has credit card",
-                "numofproducts": "num of products",
-
-            }
-            # Use the .rename() function to replace index labels
-            features = features.rename(columns=geography_mapping)
-            print(features.columns)
-
-            coef_train_df = pd.DataFrame({'Variable': features.columns, 'Coefficient_Train': coefficients_train})
-            print(coef_train_df)
-
-            # Color function to set the bar color based on values
-            def set_bar_color(val):
-                return 'orange' if val <= 0 else 'green'
-
-            coef_train_df['color'] = coef_train_df['Coefficient_Train'].apply(set_bar_color)
-
-            fig = px.bar(
-                coef_train_df,
-                x='Coefficient_Train',
-                y='Variable',
-                orientation='h',
-                title='Feature Weights',
-                labels={'Coefficient_Train': 'Feature Weight'},
-            )
-
-            fig.update_traces(marker_color=coef_train_df['color'])  # Set bar colors based on the 'color' column
-
-            # Customize the x-axis and y-axis labels
-            fig.update_xaxes(title_text='Feature Weight')
-            fig.update_yaxes(title_text='Feature')
-
-            # Add data labels
-            fig.update_traces(text=coef_train_df['Coefficient_Train'].apply(lambda x: f'{x:.4f}'), textposition='auto')
-
-            st.plotly_chart(fig)
-            fit_and_estimate.coef_train_df = coef_train_df
-
-            coefficients_df = pd.DataFrame({
-                'Variable': test_parameter_estimate_table['Variable'],  # Assuming variable names are the same
-                'Coefficient_Test': test_parameter_estimate_table['Coefficient'],
-                'Coefficient_Train': coef_train_df['Coefficient_Train']
-
-            })
-
-            coefficients_df['Coefficient_Difference'] = coefficients_df['Coefficient_Test'] - coefficients_df[
-                'Coefficient_Train']
-            coefficients_df['Coefficient_Variation'] = coefficients_df['Coefficient_Difference'] / coefficients_df[
-                'Coefficient_Train']
-
-            print(f"\nvariation between test and train estimates:\n {coefficients_df}")
-            # st.subheader("Coefficient Variation:\n")
-            # st.table(coefficients_df)
-            fit_and_estimate.coefficients_df = coefficients_df
-            fit_and_estimate.coefficient = train_data_estimate.iloc[:, 1]
-
-            return train_data_estimate
-
-
-        def fit_and_estimate2(df):
-
-            df_train, df_test = train_test_split(df, test_size=0.3, random_state=42, stratify=df['churn'])
-            fit_and_estimate2.df_train = df_train
-            fit_and_estimate2.df_test = df_test
-
-            print(df_train['churn'].value_counts(normalize=True))
-
-            print(df_test['churn'].value_counts(normalize=True))
-
-            X_train = df_train.drop(['churn'], axis=1)  # Features
-            y_train = df_train['churn']  # Target variable
-
-            ###############################################################################################
-            #########fitting the model
-
-            # Create a logistic regression model
-            log_reg_model = LogisticRegression()
-            # Fit the model to the training data to estimate parameters
-            log_reg_model.fit(X_train, y_train)
-            X_test = df_test.drop(['churn'], axis=1)  # Features
-
-            y_test = df_test['churn']  # Target variable
-
-            fit_and_estimate2.log_reg_model = log_reg_model
-            # Make predictions on the test set
-            y_pred_train = log_reg_model.predict(X_train)
-            y_pred = log_reg_model.predict(X_test)
-
-            # Evaluate the log_reg_model
-            train_accuracy = accuracy_score(y_train, y_pred_train)
-            test_accuracy = accuracy_score(y_test, y_pred)
-
-            train_confusion = confusion_matrix(y_train, y_pred_train)
-            test_confusion = confusion_matrix(y_test, y_pred)
-
-            report = classification_report(y_test, y_pred)
-
-            print(f'Train Accuracy: {train_accuracy}')
-            print(f'Test Accuracy: {test_accuracy}')
-
-            st.subheader(f'Train Accuracy: {train_accuracy}')
-            st.subheader(f'Test Accuracy: {test_accuracy}')
-
-            print(f'train confusion Matrix:\n{train_confusion}')
-            print(f'test confusion Matrix:\n{test_confusion}')
-
-            ConfusionMatrixDisplay.from_estimator(log_reg_model, X_train, y_train)
-            plt.title('Train Confusion Matrix\n')
-            st.pyplot(plt)
-
-            ConfusionMatrixDisplay.from_estimator(log_reg_model, X_test, y_test)
-            plt.title('Test Confusion Matrix\n')
-            st.pyplot(plt)
-
-            print(f'Classification Report:\n{report}')
-
-            ########################################################################################
-            # train roc curve
-
-            y_score = log_reg_model.predict_proba(X_train)[:, 1]
-            fpr, tpr, thresholds = roc_curve(y_train, y_score)
-
-            fig = px.area(
-                x=fpr, y=tpr,
-                title=f'Train: ROC Curve (AUC={auc(fpr, tpr):.4f})',
-                labels=dict(x='False Positive Rate', y='True Positive Rate'),
-                width=700, height=500
-            )
-            fig.add_shape(
-                type='line', line=dict(dash='dash'),
-                x0=0, x1=1, y0=0, y1=1
-            )
-
-            fig.update_yaxes(scaleanchor="x", scaleratio=1)
-            fig.update_xaxes(constrain='domain')
-            st.plotly_chart(fig)
-
-            # test roc curve
-
-            y_score = log_reg_model.predict_proba(X_test)[:, 1]
-            fpr, tpr, thresholds = roc_curve(y_test, y_score)
-
-            fig = px.area(
-                x=fpr, y=tpr,
-                title=f'Test: ROC Curve (AUC={auc(fpr, tpr):.4f})',
-                labels=dict(x='False Positive Rate', y='True Positive Rate'),
-                width=700, height=500
-            )
-            # fig.add_shape(
-                # type='line', line=dict(dash='dash'),
-                # x0=0, x1=1, y0=0, y1=1
-            # )
-
-            fig.update_yaxes(scaleanchor="x", scaleratio=1)
-            fig.update_xaxes(constrain='domain')
-            st.plotly_chart(fig)
-
-            ########################################################################################
-
-            # Define and fit model
-            sm_Log_model = sm.Logit(y_train, X_train).fit()
-            # print('x_train shape')
-            # print(X_train.shape, y_train.shape())
-            print('dtype')
-            print(X_train.dtypes)
-            print(y_train.dtypes)
-
-            log_reg_summary = sm_Log_model.summary()
-
-            # Convert the summary to a DataFrame
-            train_data_estimate = pd.DataFrame(log_reg_summary.tables[1])
-
-            # Set the column names to the first row of the DataFrame
-            train_data_estimate.columns = train_data_estimate.iloc[0]
-
-            # Drop the first row (which contains the column names)
-            train_data_estimate = train_data_estimate[1:]
-
-            # Reset the index
-            train_data_estimate = train_data_estimate.reset_index(drop=True)
-            print(f"\n train data estimate:\n")
-            # Summary of results
-            print(sm_Log_model.summary())
-            # st.subheader("Parameter estimate Table:\n")
-            # st.table(train_data_estimate)
-
-            ########################################################################################
-            # Create a DataFrame to store the parameter estimates
-
-            test_parameter_estimate_table = pd.DataFrame(
-                {'Variable': X_test.columns, 'Coefficient': sm_Log_model.params.values})
-
-            # Display the parameter estimate table
-            print(f"\n test_parameter_estimate_table: \n{test_parameter_estimate_table}")
-
-            ########################################################################################
-            # variation between test and train estimates
-            coefficients_train = log_reg_model.coef_[0]
-
-            coef_train_df = pd.DataFrame({'Variable': X_train.columns, 'Coefficient_Train': coefficients_train})
-            print(coef_train_df)
-
-            # Color function to set the bar color based on values
-            def set_bar_color(val):
-                return 'orange' if val <= 0 else 'green'
-
-            coef_train_df['color'] = coef_train_df['Coefficient_Train'].apply(set_bar_color)
-
-            fig = px.bar(
-                coef_train_df,
-                x='Coefficient_Train',
-                y='Variable',
-                orientation='h',
-                title='Feature Weights',
-                labels={'Coefficient_Train': 'Feature Weight'},
-            )
-
-            fig.update_traces(marker_color=coef_train_df['color'])  # Set bar colors based on the 'color' column
-
-            # Customize the x-axis and y-axis labels
-            fig.update_xaxes(title_text='Feature Weight')
-            fig.update_yaxes(title_text='Feature')
-
-            # Add data labels
-            fig.update_traces(text=coef_train_df['Coefficient_Train'].apply(lambda x: f'{x:.4f}'), textposition='auto')
-
-            st.plotly_chart(fig)
-            fit_and_estimate2.coef_train_df = coef_train_df
-
-            coefficients_df = pd.DataFrame({
-                'Variable': test_parameter_estimate_table['Variable'],  # Assuming variable names are the same
-                'Coefficient_Test': test_parameter_estimate_table['Coefficient'],
-                'Coefficient_Train': coef_train_df['Coefficient_Train']
-
-            })
-
-            coefficients_df['Coefficient_Difference'] = coefficients_df['Coefficient_Test'] - coefficients_df[
-                'Coefficient_Train']
-            coefficients_df['Coefficient_Variation'] = coefficients_df['Coefficient_Difference'] / coefficients_df[
-                'Coefficient_Train']
-
-            print(f"\nvariation between test and train estimates:\n {coefficients_df}")
-            # st.subheader("Coefficient Variation:\n")
-            # st.table(coefficients_df)
-            fit_and_estimate2.coefficients_df = coefficients_df
-            fit_and_estimate2.coefficient = train_data_estimate.iloc[:, 1]
-
-            return train_data_estimate
-
-
-        ##### Fitting the model on raw variables
-        # fit_df=churn_mapped_data.drop(['estimatedsalary', 'balance'], axis=1)
-        # fit2 = fit_and_estimate2(fit_df)
-
-        # ##KS using excel method :
-        # # Probabilities_df
-
-        # # p(Y)= 1/1+e^-(c1f+c2f...)
-        # #   Score = c +c1f + c2f + c3f
-        # coefficient = fit_and_estimate2.coefficient.astype(str).astype(float).iloc[:-1]
-
-        # def calculate_score(row):
-        #     # Exclude the 'churn' column when calculating the score
-        #     return sum(coef * feature for coef, feature in zip(coefficient, row.drop('churn')))
-
-        # # Apply the function to each row of the DataFrame
-        # score_prob_df = fit_and_estimate2.df_train.copy()
-
-        # # Calculate 'CxF' without multiplying the 'churn' column
-        # score_prob_df['CxF'] = score_prob_df.apply(calculate_score, axis=1)
-
-        # # Calculate 'X' and 'churn_prob' as before
-        # score_prob_df['X'] = 1 + np.exp(-score_prob_df['CxF'])
-        # score_prob_df['churn_prob'] = 1 / score_prob_df['X']
-
-        # # Decile column
-
-        # # Sort the DataFrame in ascending order
-        # score_prob_df = score_prob_df.sort_values(by='churn_prob', ascending=False)
-        # score_prob_df['rownumber'] = range(1, len(score_prob_df) + 1)
-
-        # total_rows = len(score_prob_df)
-        # n = 7
-        # rows_per_decile = total_rows // n  # 7 deciles
-
-        # # Create a list to hold decile values
-        # deciles = []
-
-        # # Assign decile values to the rows
-        # for i in range(1, n + 1):  # n deciles
-        #     start_index = (i - 1) * rows_per_decile
-        #     end_index = i * rows_per_decile
-        #     deciles.extend([i] * (end_index - start_index))
-
-        # # Add the decile column to the DataFrame
-        # score_prob_df['decile'] = deciles
-
-        # #Lift df
-        # # Group by 'decile' and calculate max and min probabilities
-        # max_values = score_prob_df.groupby('decile')['churn_prob'].max()
-        # min_values = score_prob_df.groupby('decile')['churn_prob'].min()
-        # test_lift_df = pd.DataFrame(
-        #     {'decile': max_values.index, 'max_value': max_values.values, 'min_value': min_values.values})
-        # churn_count_df = score_prob_df.groupby('decile')['churn'].sum().reset_index()
-
-        # # Rename the columns to match your 'result_df' format
-        # churn_count_df.columns = ['decile', 'churn_count']
-
-        # # Merge 'churn_count_df' with 'result_df' on the 'decile' column
-        # test_lift_df = pd.merge(test_lift_df, churn_count_df, on='decile', how='left')
-        # test_lift_df['non_churn_count'] = 1000 - test_lift_df['churn_count']
-
-        # test_lift_df['cumulative_churn_count'] = test_lift_df['churn_count'].cumsum()
-        # test_lift_df['cumulative_non_churn_count'] = test_lift_df['non_churn_count'].cumsum()
-        # test_lift_df['%cumulative_churn'] = test_lift_df['cumulative_churn_count'] / test_lift_df['churn_count'].sum()
-        # test_lift_df['%cumulative_non_churn'] = test_lift_df['cumulative_non_churn_count'] / test_lift_df['non_churn_count'].sum()
-        # test_lift_df['KS'] = test_lift_df['%cumulative_churn'] - test_lift_df['%cumulative_non_churn']
-
-        # st.subheader('Train Lift Table')
-        # st.table(test_lift_df)
-
-        # KC using Kaggle method
         X = churn_mapped_data.drop(['churn'], axis=1)  # Features
-        y = churn_mapped_data['churn']  # Target variable
-        X1 = X.drop(['estimatedsalary', 'balance'], axis=1)
-        fit = fit_and_estimate(X1, y)
-        print(fit)
-
-
-        def calc_KS_chart(df_ks, df_type):
-            # KS using Kaggle method
-            KSdata = df_ks.copy()
-
-            def calculate_ks_statistics(data, predicted_probability, ground_truth, response_name='churn'):
-                # Sort the data in descending order of predicted probabilities.
-                data = data.sort_values(by=predicted_probability, ascending=False)
-
-                # Create deciles based on the predicted probabilities.
-                # label_mapping = {'min','max'}
-
-                data['decile_group'] = pd.qcut(data[predicted_probability], q=10)
-
-                # Create columns for success and non-success responses.
-                KS_data = data.groupby('decile_group').agg(
-                    total_count=pd.NamedAgg(column=ground_truth, aggfunc='count'),
-                    success_count=pd.NamedAgg(column=ground_truth, aggfunc='sum')
-                ).sort_index(ascending=False)
-
-                # Calculate additional statistics.
-                KS_data['Number of Non-' + response_name] = KS_data['total_count'] - KS_data['success_count']
-                KS_data[response_name + '_Rate (%)'] = (KS_data['success_count'] / KS_data['total_count'] * 100).round(
-                    2)
-                KS_data['Percent of ' + response_name + ' (%)'] = (
-                        (KS_data['success_count'] / KS_data['success_count'].sum()) * 100).round(2)
-                KS_data['Percent of Non-' + response_name + ' (%)'] = (
-                        (KS_data['Number of Non-' + response_name] / KS_data[
-                            'Number of Non-' + response_name].sum()) * 100).round(2)
-                KS_data['ks_stats'] = ((KS_data['Percent of ' + response_name + ' (%)'].cumsum() - KS_data[
-                    'Percent of Non-' + response_name + ' (%)'].cumsum()).round(4)).astype(float)
-
-                KS_data['max_ks'] = np.where(KS_data['ks_stats'] == KS_data['ks_stats'].max(), 'Yes', '')
-                calculate_ks_statistics.max_ks = KS_data['ks_stats'].max()
-
-                # Calculate Gain and Lift.
-                KS_data['Gain'] = KS_data['Percent of ' + response_name + ' (%)'].cumsum()
-                KS_data['Lift'] = (KS_data['Gain'] / np.arange(10, 100 + 10, 10)).round(2)
-
-                return KS_data
-
-            # Example usage:
-            ks_data = calculate_ks_statistics(KSdata, 'lg_predicted_probability', ground_truth='churn')
-
-            st.subheader(f"{df_type} KS table")
-            st.dataframe(ks_data)
-            st.subheader(f" {df_type} KS: {calculate_ks_statistics.max_ks}")
-
-            def model_selection_by_gain_chart(model_gains_dict):
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(x=list(range(0, 100 + 10, 10)), y=list(range(0, 100 + 10, 10)),
-                                         mode='lines+markers', name='Random Model'))
-                for model_name, model_gains in model_gains_dict.items():
-                    model_gains.insert(0, 0)
-                    fig.add_trace(go.Scatter(x=list(range(0, 100 + 10, 10)), y=model_gains,
-                                             mode='lines+markers', name=model_name))
-                fig.update_xaxes(
-                    title_text=f"% of {df_type} Data Set", )
-
-                fig.update_yaxes(title_text="% of Gain", )
-                fig.update_layout(title=f'{df_type} Gain Chart', )
-                st.plotly_chart(fig)
-
-            model_selection_by_gain_chart({'Log_regression': ks_data.Gain.to_list()})
-
-            def model_selection_by_lift_chart(model_lift_dict):
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(x=list(range(10, 100 + 10, 10)), y=np.repeat(1, 10),
-                                         mode='lines+markers', name='Random Lift'))
-                for model_name, model_lifts in model_lift_dict.items():
-                    fig.add_trace(go.Scatter(x=list(range(10, 100 + 10, 10)), y=model_lifts,
-                                             mode='lines+markers', name=model_name))
-                fig.update_xaxes(
-                    title_text=f"% of {df_type} Data Set", )
-
-                fig.update_yaxes(title_text="Lift", )
-                fig.update_layout(title=f'{df_type}  Lift Chart', )
-                st.plotly_chart(fig)
-
-            model_selection_by_lift_chart({'Log_regression': ks_data.Lift.to_list()})
-
-            return ks_data
-
-
-        train_ks = fit_and_estimate.train_ks_table
-        train_ks_data = calc_KS_chart(train_ks, "Train")
-        print('row count for first and last decile')
-        print(train_ks[train_ks['lg_predicted_probability'] >= 0.417]['lg_predicted_probability'].count())
-        print(train_ks[train_ks['lg_predicted_probability'] <= 0.0556]['lg_predicted_probability'].count())
-
-        test_ks = fit_and_estimate.test_ks_table
-        test_ks_data = calc_KS_chart(test_ks, "Test")
-
-
-        def rm_insig_val(df, X_train, y_train):
-
-            sig_features = ['creditscore', 'geography', 'gender', 'age', 'tenure', 'balance', 'numofproducts',
-                            'hascrcard', 'isactivemember', 'estimatedsalary', 'intercept']
-
-            print(f"\n Significant Features : {sig_features} \n")
-
-            while True:
-
-                X_train_1 = X_train[sig_features]
-                # Define and fit model
-
-                model = sm.Logit(y_train, X_train_1).fit()
-
-                # Summary of results
-                print(f"train data estimate : {model.summary().tables[1]}")
-
-                # Get the p-values for each feature (excluding the 'Intercept' column)
-                p_values = model.pvalues
-
-                # Find the features with p-values greater than 0.05
-                insig_features = p_values[p_values > 0.05]
-                print(f"\nfeatures to be removed:{insig_features.count()}")
-                print(insig_features)
-
-                if insig_features.empty:
-                    break
-
-                # Remove the feature(s) with high p-values
-                feature_to_remove = insig_features.idxmax()
-
-                print(f"\n Feature to remove: {feature_to_remove}")
-                sig_features.remove(feature_to_remove)
-
-            print(f"after removing all: {model.summary().tables[1]}")
-            return sig_features
-        
-
-        #Random Forest
-        st.header('Random Forest Model')
-        # Importing the required libraries
-        import pandas as pd, numpy as np
-        import matplotlib.pyplot as plt, seaborn as sns
-        
-        geography_mapping = {
-
-            "geography_1": "Bihar",
-            "geography_2": "Goa",
-            "geography_3": "Gujarat",
-            "geography_4": "Kerala",
-            "geography_5": "Madhya Pradesh",
-            "geography_6": "Maharashtra",
-            "geography_7": "Andhra Pradesh",
-            "isactivemember": "is active member",
-            "hascrcard":"has credit card",
-            "numofproducts": "num of products",
-
-        }
-        # Use the .rename() function to replace index labels
-        churn_mapped_data = churn_mapped_data.rename(columns=geography_mapping)
-        # Putting feature variable to X
-        X = churn_mapped_data.drop('churn',axis=1)
-        # Putting response variable to y
         y = churn_mapped_data['churn']
+        X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.3, random_state=42,stratify =y)
 
-        # now lets split the data into train and test
-        from sklearn.model_selection import train_test_split
-        # Splitting the data into train and test
-        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, random_state=42)
+        # Kmeans
+        churn_df=churn_mapped_data.copy()
+        continous_features = churn_df[['creditscore', 'age', 'numofproducts', 'estimatedsalary', 'tenure', 'balance']]
+
+        from sklearn.preprocessing import StandardScaler
+
+        scaler = StandardScaler()
+        continous_features_scaled = scaler.fit_transform(continous_features)
+        #continous_features_scaled[continous_features_scaled.columns] = StandardScaler().fit_transform(continous_features_scaled)
+        continous_features_scaled = pd.DataFrame(continous_features_scaled, columns=continous_features.columns)
+
+        print(continous_features_scaled.describe())
+
+        
+        kmeans = KMeans(2)
+
+        kmeans.fit(X_train[continous_features_scaled.columns])
+
+
+        identified_clusters = kmeans.fit_predict(X_train[continous_features_scaled.columns])
         
 
 
-        from sklearn.ensemble import RandomForestClassifier
-        classifier_rf = RandomForestClassifier(random_state=42, n_jobs=-1, max_depth=5,
-                                            n_estimators=100, oob_score=True)
-
-
-        classifier_rf.fit(X_train, y_train)
-
-
-        # Predict on the test set results
-
-        y_pred_train = classifier_rf.predict(X_train)
-        y_pred_test = classifier_rf.predict(X_test)
-
-
-        print('Accuracy before Hyperparameter tuning')
-        # Check accuracy score 
-        print('Train  accuracy score  : {0:0.4f}'. format(accuracy_score(y_train, y_pred_train)))
-        print('Test Model accuracy score  : {0:0.4f}'. format(accuracy_score(y_test, y_pred_test)))
-
-        # #Hyperprameter Tuning
-        rf = RandomForestClassifier(random_state=42, n_jobs=-1)
-        params = {
-            'max_depth': [2,3,5,10,20],
-            'min_samples_leaf': [5,10,20,50,100,200],
-            'n_estimators': [10,25,30,50,100,200]
-        }
-        
-        rf_best = RandomForestClassifier(max_depth=20, min_samples_leaf=5, n_estimators=50,
-                        n_jobs=-1, random_state=42)
-        # print(f"best grid estimates {rf_best}\n")
-
-
-        # fitting after hyperparameter tuning
-
-        rf_best.fit(X_train, y_train)
-        # fitting after hyperparameter tuning
-
-        y_pred_train2 = rf_best.predict(X_train)
-        y_pred_test2 = rf_best.predict(X_test)
-
-
-        # Check accuracy score 
-        st.write('Train Model accuracy : {0:0.4f}'. format(accuracy_score(y_train, y_pred_train2)))
-        st.write('Test Model accuracy  : {0:0.4f}'. format(accuracy_score(y_test, y_pred_test2)))
-
-        import plotly.express as px
-
-
-        features = X_train.copy()
-
-
-        feature_scores = pd.Series(rf_best.feature_importances_, index=features.columns)
-
-
-
-        # Create a DataFrame for plotting
-        feature_scores_df = pd.DataFrame({'Features': feature_scores.index, 'Scores': feature_scores.values})
-        # Ensure that the DataFrame is sorted in descending order
-        feature_scores_df = feature_scores_df.sort_values(by='Scores', ascending=False)
+        X_train_with_clusters = X_train.copy()
+        X_train_with_clusters['Clusters'] = identified_clusters 
 
 
 
 
-        # Create a horizontal bar chart using Plotly
-        fig = px.bar(
-            feature_scores_df,
-            x='Scores',
-            y='Features',
-            orientation='h',
-            title='Feature Importance Scores',
-            category_orders={"Features": feature_scores_df['Features'].values},
-            text='Scores',  # Display the scores as labels
+
+        # Assuming you have a X_trainset called 'X_train' and you want to find the optimal k
+
+        distortions = []
+        K = list(range(1, 11))  # Convert the range to a list
+
+        for k in K:
+            kmeanModel = KMeans(n_clusters=k)
+            kmeanModel.fit(X_train[continous_features_scaled.columns])
+            distortions.append(sum(np.min(cdist(X_train[continous_features_scaled.columns], kmeanModel.cluster_centers_, 'euclidean'), axis=1)) / X_train[continous_features_scaled.columns].shape[0])
+
+
+
+        # Create the elbow plot
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=K, y=distortions, mode='lines+markers', name='Distortion'))
+        fig.update_layout(
+           
+            xaxis_title='Number of Clusters (k)',
+            yaxis_title='Distortion'
         )
-        fig.update_layout(xaxis_title='Score', yaxis_title='Features')
-        fig.update_traces(texttemplate='%{text:.3f}', textposition='outside')
-
-
+        st.subheader(f'Clustering')
         st.plotly_chart(fig)
 
-        from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+        
+
+
+        # Create a 2x3 subplot grid for 6 plots
+        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+
+        # Iterate through the range of clusters and create SilhouetteVisualizer for each
+        for n_clusters, ax in zip(range(2, 8), axes.ravel()):
+            km = KMeans(n_clusters=n_clusters, init='k-means++', n_init=10, max_iter=100, random_state=42)
+            visualizer = SilhouetteVisualizer(km, colors='yellowbrick', ax=ax)
+            visualizer.fit(X_train[continous_features_scaled.columns])
+            ax.set_title(f"Silhouette Plot for {n_clusters} Clusters")
+
+        plt.tight_layout()
+        # plt.show()
+
+
+
+
+        print(f"Silhouette Score for X_train")
+        for i in range(2, 8):  # Change the range to cover 10 clusters
+            km = KMeans(n_clusters=i, init='k-means++', n_init=10, max_iter=100, random_state=42)
+            km.fit(X_train[continous_features_scaled.columns])
+            score = metrics.silhouette_score(X_train[continous_features_scaled.columns], km.labels_, metric='euclidean')
+            
+            print(f"Cluster : {i}")
+            print(score)
+
+
+        def canonical_plot(data):   
+            clus_train = data[continous_features_scaled.columns].copy()
+
+
+            # '''
+            # K-MEANS ANALYSIS - INITIAL CLUSTER SET
+            # '''
+            # k-means cluster analysis for 1-10 clusters due to the 10 possible class outcomes for poker hands                                                       
+            from scipy.spatial.distance import cdist
+            clusters=range(1,11)
+            meandist=[]
+            # average distances from data points to their respective cluster centroids for each corresponding number of clusters.
+
+            # loop through each cluster and fit the model to the train set
+            # generate the predicted cluster assingment and append the mean distance my taking the sum divided by the shape
+            
+
+            # Interpret 2 cluster solution
+            model3=KMeans(n_clusters=4)
+            model3.fit(clus_train) # has cluster assingments based on using 2 clusters
+            clusassign=model3.predict(clus_train)
+
+            # plot clusters
+            # ''' Canonical Discriminant Analysis for variable reduction:
+            # 1. creates a smaller number of variables
+            # 2. linear combination of clustering variables
+            # 3. Canonical variables are ordered by proportion of variance accounted for
+            # 4. most of the variance will be accounted for in the first few canonical variables
+            # '''
+            # from sklearn.decomposition import PCA # CA from PCA function
+            pca_2 = PCA(2) # return 2 first canonical variables
+            plot_columns = pca_2.fit_transform(clus_train) #reduce the data to two dimensions
+
+            # """
+            # BEGIN multiple steps to merge cluster assignment with clustering variables to examine
+            # cluster variable means by cluster
+            # """
+            # # create a unique identifier variable from the index for the
+            # cluster training data to merge with the cluster assignment variable
+            clus_train.reset_index(level=0, inplace=True)
+            # create a list that has the new index variable
+            cluslist=list(clus_train['index'])
+            # create a list of cluster assignments
+            labels=list(model3.labels_)
+            # combine index variable list with cluster assignment list into a dictionary
+            newlist=dict(zip(cluslist, labels))
+            
+            # convert newlist dictionary to a dataframe
+            newclus=pd.DataFrame.from_dict(newlist, orient='index')
+            
+            # rename the cluster assignment column
+            newclus.columns = ['cluster']
+
+            # now do the same for the cluster assignment variable create a unique identifier variable from the index for the
+            # cluster assignment dataframe to merge with cluster training data
+            newclus.reset_index(level=0, inplace=True)
+            # merge the cluster assignment dataframe with the cluster training variable dataframe
+            # by the index variable
+            merged_train=pd.merge(clus_train, newclus, on='index')
+            # cluster frequencies
+
+
+            # """
+            # END multiple steps to merge cluster assignment with clustering variables to examine
+            # cluster variable means by cluster
+            # """
+
+            # FINALLY calculate clustering variable means by cluster
+            canonical_plot.clustergrp = merged_train.groupby('cluster').mean()
+
+
+
+            # PCA Scatterplot
+            fig = px.scatter(clus_train, x=plot_columns[:, 0], y=plot_columns[:, 1], color=model3.labels_)
+            fig.update_layout(
+                xaxis_title='Canonical variable 1',
+                yaxis_title='Canonical variable 2',
+                title='Scatterplot of Canonical Variables for 4 Clusters'
+            )
+            st.plotly_chart(fig)
+                    
+        st.subheader(f"Train Clusters")
+        can_train=canonical_plot(X_train)
+        X_train_mean=canonical_plot.clustergrp
+        st.subheader(f"Test Clusters")
+        can_test=canonical_plot(X_test)
+        X_test_mean=canonical_plot.clustergrp
+
+        print(f"\n\nX_Train Mean: {X_train_mean}")
+        print(f"\n\n\nX_Test Mean {X_test_mean}")
+
+        # Isolation Forest
+        IF_classifier = IsolationForest(n_estimators  = 2_000,
+                                contamination = 0.01,
+                                random_state  = 42)
+
+        IF_classifier.fit(X_train)
+        metrics_df=X_train.copy()
+        pred = IF_classifier.predict(metrics_df)
+        metrics_df['anomaly']=pred
+        outliers=metrics_df.loc[metrics_df['anomaly']==-1]
+        outlier_index=list(outliers.index)
+        #print(outlier_index)
+        #Find the number of anomalies and normal points here points classified -1 are anomalous
+        print(metrics_df['anomaly'].value_counts())
+
+        # Visualize Outliers
+        #Train
+        # Step 1: Perform PCA to reduce dimensionality
+        n_components = 2  # You can adjust the number of components
+        pca = PCA(n_components=n_components)
+
+        X_pca = pca.fit_transform(metrics_df)
+
+        # Step 2: Use the reduced data for anomaly detection
+        IF_classifier = IsolationForest(n_estimators=2_000, contamination=0.01, random_state=42)
+        IF_classifier.fit(X_pca)
+
+        # Step 3: Identify and store the indices of outliers
+        pred = IF_classifier.predict(X_pca)
+        metrics_df['anomaly'] = pred
+        outliers = metrics_df.loc[metrics_df['anomaly'] == -1]
+        outlier_index = list(outliers.index)
+
+        # Step 4: Plot the outliers using Plotly
+        fig = go.Figure()
+
+        # Plot normal data points
+        normal_data = X_pca[metrics_df['anomaly'] == 1]
+        fig.add_trace(go.Scatter(x=normal_data[:, 0], y=normal_data[:, 1], mode='markers', name='normal points'))
+
+        # Plot outliers
+        outlier_data = X_pca[metrics_df['anomaly'] == -1]
+        fig.add_trace(go.Scatter(x=outlier_data[:, 0], y=outlier_data[:, 1], mode='markers', name='anomalies'))
+
+        # Set layout properties
+        fig.update_layout(
+            title="Outliers Detected by Isolation Forest",
+            xaxis_title="Principal Component 1",
+            yaxis_title="Principal Component 2"
+        )
+
+        # Show the plot
+        # fig.show()
+        # Find the number of anomalies and normal points
+
+        #Test
+        IF_classifier = IsolationForest(n_estimators  = 2_000,
+                                contamination = 0.01,
+                                random_state  = 42)
+
+        IF_classifier.fit(X_test)
+        metrics_df=X_test.copy()
+        pred = IF_classifier.predict(metrics_df)
+        metrics_df['anomaly']=pred
+        outliers=metrics_df.loc[metrics_df['anomaly']==-1]
+        outlier_index=list(outliers.index)
+        #print(outlier_index)
+        #Find the number of anomalies and normal points here points classified -1 are anomalous
+        # print(metrics_df['anomaly'].value_counts())
+
+        # Step 1: Perform PCA to reduce dimensionality
+        n_components = 2  # You can adjust the number of components
+        pca = PCA(n_components=n_components)
+
+        X_pca = pca.fit_transform(metrics_df)
+
+        # Step 2: Use the reduced data for anomaly detection
+        IF_classifier = IsolationForest(n_estimators=2_000, contamination=0.01, random_state=42)
+        IF_classifier.fit(X_pca)
+
+        # Step 3: Identify and store the indices of outliers
+        pred = IF_classifier.predict(X_pca)
+        metrics_df['anomaly'] = pred
+        outliers = metrics_df.loc[metrics_df['anomaly'] == -1]
+        outlier_index = list(outliers.index)
+
+        # Step 4: Plot the outliers using Plotly
+        fig = go.Figure()
+
+        # Plot normal data points
+        normal_data = X_pca[metrics_df['anomaly'] == 1]
+        fig.add_trace(go.Scatter(x=normal_data[:, 0], y=normal_data[:, 1], mode='markers', name='normal points'))
+
+        # Plot outliers
+        outlier_data = X_pca[metrics_df['anomaly'] == -1]
+        fig.add_trace(go.Scatter(x=outlier_data[:, 0], y=outlier_data[:, 1], mode='markers', name='anomalies'))
+
+        # Set layout properties
+        fig.update_layout(
+            title="Outliers Detected by Isolation Forest",
+            xaxis_title="Principal Component 1",
+            yaxis_title="Principal Component 2"
+        )
+
+        # Show the plot
+        # fig.show()
+        # Find the number of anomalies and normal points
+
+
+        #Pipeline Estimates
+
+                
+        def estimate_pipeline(model, model_name):
+            pipe = Pipeline([
+                ('scaler', StandardScaler()),  # Step 1: Standardize the features
+                ('selector', VarianceThreshold()),  # Step 2: Remove features with low variance
+                ('classifier', model)  # Step 3: Random Forest Classifier (can be replaced with other classifiers)
+            ])
+
+            # X_train, X_test, y_train, y_test = train_test_split(X1, y, test_size=0.3, random_state=40)
+                
+
+            pipe.fit(X_train, y_train)
+
+            training_score = pipe.score(X_train, y_train)
+            test_score = pipe.score(X_test, y_test)
+            
+            # Create a dictionary to store the results
+            results = {
+                "Algorithm": model_name,
+                "parameters_used":str(model),
+                "Train Accuracy": training_score,
+                "Test Accuracy": test_score
+            }
+            
+            return results
+            
+
+        # Initialize a list to store results for different models
+        results_list = []
+
+        log_reg_results = estimate_pipeline(LogisticRegression(), "Logistic Regression")
+        results_list.append(log_reg_results)
+
+        random_forest_pipeline=estimate_pipeline(RandomForestClassifier(max_depth=20, min_samples_leaf=5, n_estimators=50, n_jobs=-1, random_state=42), "Random Forest")
+        results_list.append(random_forest_pipeline)
+
+        svc_pipeline=estimate_pipeline(SVC(), "Support Vector Machine")
+        results_list.append(svc_pipeline)
+
+        naive_bayes_model = GaussianNB()
+        NB_pipeline=estimate_pipeline(naive_bayes_model, "Naive Bayes model")
+        results_list.append(NB_pipeline)
+
+      
+        gradient_boosting_model = GradientBoostingClassifier(n_estimators=100, random_state=42)
+        gradient_boosting_results = estimate_pipeline(gradient_boosting_model, "Gradient Boosting")
+        results_list.append(gradient_boosting_results)
+
+        #NN Classifier
+        NN_classifier = Sequential()
+        NN_classifier.add(Dense(8.5, activation = 'relu',input_dim = 16))
+        NN_classifier.add(Dense(8.5, activation = 'relu'))
+        ### If we have more than 2 categories in the dependent variable then the activation function used in the output layer is softmax
+        ### softmax is a sigmoid activation function for dependent variable with more than 2 categories
+        ## and Output_dim = 3 for 3 categories in the dependent variable
+        NN_classifier.add(Dense(1,activation = 'sigmoid'))
+
+        NN_classifier.compile(optimizer = 'adam',loss = 'binary_crossentropy',metrics = ['accuracy'])
+        X_train = X_train.astype(np.float32)
+        y_train = y_train.astype(np.float32)
+
+        history = NN_classifier.fit(X_train, y_train, batch_size=10, epochs=10)
+
+        # Access the accuracy values from the history
+        train_accuracy = history.history['accuracy']  # List of training accuracy values
+        last_accuracy = train_accuracy[-1]
+
+
+        # Create a dictionary to store the result
+        result_dict={
+            "Algorithm":"Simple Neural Network",
+            "parameters_used":NN_classifier
+        }
+        result_dict["Train Accuracy"] = last_accuracy
+
+        X_test = X_test.astype(np.float32)
+        y_test = y_test.astype(np.float32)
+        
+        history = NN_classifier.fit(X_test,y_test,batch_size = 10, epochs = 10)
+        test_accuracy = history.history['accuracy']  # List of training accuracy values
+
+        last_accuracy = test_accuracy[-1]
+        result_dict["Test Accuracy"] = last_accuracy
+
+        results_list.append(result_dict)
+        results_df = pd.DataFrame(results_list)
+        results_df['Average Accuracy'] = (results_df['Train Accuracy'] + results_df['Test Accuracy']) / 2
+
+        # results_df
+
+        selected_columns = ['Algorithm', 'Train Accuracy', 'Test Accuracy']
+        results_df_op = results_df[selected_columns]
+        # Assuming your DataFrame is named 'df'
+        results_df_op = results_df_op.sort_values(by=['Train Accuracy', 'Test Accuracy'], ascending=False)
+        results_df_op = results_df_op.reset_index(drop=True)
+        results_df_op.index = results_df_op.index + 1
+        table_style = f"<style> table {{ font-size: 20px; }} </style>"
+
+        st.subheader("Pipeline Estimates: ")
+
+        st.write(table_style, unsafe_allow_html=True)
+        st.table(results_df_op)
+
+        # Select Best Model
+        best_algorithm = results_df.loc[results_df['Average Accuracy'].idxmax()]
+        best_algorithm_model = best_algorithm['parameters_used'].replace('\n', '')
+        best_algorithm_model_name = best_algorithm['Algorithm'].replace('\n', '')
+        st.write(f"Best Algorithm Model: {best_algorithm_model_name}")
+
+        # Model Interpretations
+        st.header('Model Interpretations')     
+        model = eval(best_algorithm_model)
+        model.fit(X_train, y_train)
+
+        #accuracies
+        y_pred_train = model.predict(X_train)
+        y_pred_test = model.predict(X_test)
+        st.subheader('Train  Accuracy score  : {0:0.4f}'. format(accuracy_score(y_train, y_pred_train)))
+        st.subheader('Test  Accuracy score  : {0:0.4f}'. format(accuracy_score(y_test, y_pred_test)))
 
         y_true = y_test  # Replace with your actual labels
 
+        precision = precision_score(y_true, y_pred_test)
+        recall = recall_score(y_true, y_pred_test)
+        f1 = f1_score(y_true, y_pred_test)
 
-        accuracy = accuracy_score(y_true, y_pred_test2)
-        precision = precision_score(y_true, y_pred_test2)
-        recall = recall_score(y_true, y_pred_test2)
-        f1 = f1_score(y_true, y_pred_test2)
-
-        print("Accuracy:", accuracy)
         print("Precision:", precision)
         print("Recall:", recall)
         print("F1-Score:", f1)
-        
 
-        y_pred_train2 = rf_best.predict(X_train)
-        train_confusion = confusion_matrix(y_train, y_pred_train2)
-        test_confusion = confusion_matrix(y_test, y_pred_test2)
-
-        report = classification_report(y_test, y_pred_test2)
-        print(f"classification report: {report}")
+        #Confusion Matrix
+                
+        train_confusion = confusion_matrix(y_train, y_pred_train)
+        test_confusion = confusion_matrix(y_test, y_pred_test)
 
 
         print(f'train confusion Matrix:\n{train_confusion}')
         print(f'test confusion Matrix:\n{test_confusion}')
+
+
 
         def plot_swapped_columns_transposed_conf_matrix(conf, dftype):
             import plotly.figure_factory as ff
@@ -1343,7 +961,7 @@ if file is not None:
                         font=dict(color=font_color)
                     ))
 
-           
+            
 
             # Create a figure with custom annotations and color scale for the transposed matrix
             fig = ff.create_annotated_heatmap(
@@ -1365,60 +983,88 @@ if file is not None:
                 xaxis=dict(title='Predicted'),
                 yaxis=dict(title='Actual'),
             )
-            st.subheader(f'{dftype} Confusion Matrix \n')
+            st.subheader(f'{dftype} Confusion Matrix: \n')
             # Show the plot
             st.plotly_chart(fig)
-
         # Example usage
         plot_swapped_columns_transposed_conf_matrix(train_confusion, "Train")
         plot_swapped_columns_transposed_conf_matrix(test_confusion, "Test")
 
-        # Assuming you have a trained classifier rf_classifier and test data X_test, y_test
-        y_prob = rf_best.predict_proba(X_test)[:, 1]
-        fpr, tpr, thresholds = roc_curve(y_test, y_prob)
-        roc_auc = auc(fpr, tpr)
+        #K fold Cross Validation
+        
 
-        roc_curve_fig = go.Figure()
-
-        # Add the ROC curve trace
-        roc_curve_fig.add_trace(
-            go.Scatter(x=fpr, y=tpr, mode='lines', name='ROC Curve (AUC = {:.2f})'.format(roc_auc))
-        )
-
-        # Add a diagonal line (random classifier)
-        roc_curve_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', line=dict(dash='dash'), name='Random Classifier'))
-
-        # Customize the layout
-        roc_curve_fig.update_layout(
-            title='Receiver Operating Characteristic (ROC) Curve',
-            xaxis_title='False Positive Rate (FPR)',
-            yaxis_title='True Positive Rate (TPR)',
-            legend=dict(x=0.02, y=0.98),
-            margin=dict(l=10, r=10, t=30, b=10),
-            autosize=True,
-        )
-
-        # Show the ROC curve
-        st.plotly_chart(roc_curve_fig)
+        def calc_Kfold(model):
+            # Define the number of folds (k) for cross-validation
+            k = 10  # You can adjust this value
 
 
-        # Assuming you have a trained classifier rf_classifier and test data X_test, y_test
-        y_prob_train = rf_best.predict_proba(X_train)[:, 1]
+            st.subheader(f"K Fold Cross Validation for Random Forest model\n")
+            # Perform k-fold cross-validation
+            cross_val_scores = cross_val_score(model, X_train, y_train, cv=k, scoring='accuracy')
+
+
+            "Train K Fold cross validation"
+            # Print the accuracy scores for each fold
+            for fold, accuracy in enumerate(cross_val_scores, start=1):
+                f'Fold {fold}: Accuracy = {accuracy:.2f}'
+
+            # Calculate and print the mean accuracy
+            mean_accuracy = np.mean(cross_val_scores)
+            f'Mean Accuracy: {mean_accuracy:.2f}\n\n'
+
+        random_forest_pipeline=calc_Kfold(RandomForestClassifier(max_depth=20, min_samples_leaf=5, n_estimators=50,
+                            n_jobs=-1, random_state=42))
+
+
+        # ROC Curve
+        y_prob_train = model.predict_proba(X_train)[:, 1]
         fpr, tpr, thresholds = roc_curve(y_train, y_prob_train)
         roc_auc = auc(fpr, tpr)
 
-        roc_curve_fig = go.Figure()
+        train_roc_curve_fig = go.Figure()
 
         # Add the ROC curve trace
-        roc_curve_fig.add_trace(
+        train_roc_curve_fig.add_trace(
+            go.Scatter(x=fpr, y=tpr, mode='lines', name='ROC Curve (AUC = {:.2f})'.format(roc_auc),
+                        legendgroup="group"  # this can be any string, not just "group")
+                        ))
+
+        # Add a diagonal line (random classifier)
+        train_roc_curve_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', line=dict(dash='dash'), name='Random Classifier'))
+
+        # Customize the layout
+        train_roc_curve_fig.update_layout(
+            title='Receiver Operating Characteristic (ROC) Curve',
+            xaxis_title='False Positive Rate (FPR)',
+            yaxis_title='True Positive Rate (TPR)',
+            legend=dict(x=0.02, y=0.98),
+            margin=dict(l=10, r=10, t=30, b=10),
+            autosize=True,
+
+        )
+        
+        st.subheader("Train ROC Curve")
+        # Show the ROC curve
+        st.plotly_chart(train_roc_curve_fig)
+
+
+        # Assuming you have a trained classifier rf_classifier and test data X_test, y_test
+        y_prob_test = model.predict_proba(X_test)[:, 1]
+        fpr, tpr, thresholds = roc_curve(y_test, y_prob_test)
+        roc_auc = auc(fpr, tpr)
+
+        test_roc_curve_fig = go.Figure()
+
+        # Add the ROC curve trace
+        test_roc_curve_fig.add_trace(
             go.Scatter(x=fpr, y=tpr, mode='lines', name='ROC Curve (AUC = {:.2f})'.format(roc_auc))
         )
 
         # Add a diagonal line (random classifier)
-        roc_curve_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', line=dict(dash='dash'), name='Random Classifier'))
+        test_roc_curve_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', line=dict(dash='dash'), name='Random Classifier'))
 
         # Customize the layout
-        roc_curve_fig.update_layout(
+        test_roc_curve_fig.update_layout(
             title='Receiver Operating Characteristic (ROC) Curve',
             xaxis_title='False Positive Rate (FPR)',
             yaxis_title='True Positive Rate (TPR)',
@@ -1426,29 +1072,83 @@ if file is not None:
             margin=dict(l=10, r=10, t=30, b=10),
             autosize=True,
         )
+        st.subheader("Test ROC Curve")
 
         # Show the ROC curve
-        st.plotly_chart(roc_curve_fig)
+        st.plotly_chart(test_roc_curve_fig)
 
-
-        # explainer = shap.Explainer(rf_best)
-        # shap_values = explainer.shap_values(X_test)
-        #The SHAP values represent the contribution of each feature to the prediction made by the model for each instance in X_test.
-        # shap.summary_plot(shap_values, X_test,  max_display=12)
-
-        fig, ax = plt.gcf(), plt.gca()
+        #Feature Importance Plot
         
+        # Get feature importances
+        feature_importances = model.feature_importances_
+    
+        geography_mapping = {
 
-        st.pyplot(fig)
+            "geography_1": "Bihar",
+            "geography_2": "Goa",
+            "geography_3": "Gujarat",
+            "geography_4": "Kerala",
+            "geography_5": "Madhya Pradesh",
+            "geography_6": "Maharashtra",
+            "geography_7": "Andhra Pradesh",
+            "isactivemember": "is active member",
+            "hascrcard":"has credit ard",
+            "numofproducts": "num of products"            
 
-        # shap.summary_plot(shap_values[0], X_test)
-        #Display the summary_plot of the label “0”.
-        fig, ax = plt.gcf(), plt.gca()
-        st.pyplot(fig)
+        }
+        features = X_train.copy()
 
-        # shap.plots.force(explainer.expected_value[1], shap_values[1][10, :], X_test.iloc[10, :],matplotlib = True)
-        fig, ax = plt.gcf(), plt.gca()
-        st.pyplot(fig)
+        # Use the .rename() function to replace index labels
+        features = features.rename(columns=geography_mapping)
+        print(features.columns)
+
+
+
+        # Assuming you have a list of feature names
+        # feature_names = X_train.columns
+
+        # Create a DataFrame with feature names and their importances
+        feature_importance_df = pd.DataFrame({'Feature': features.columns, 'Importance': feature_importances})
+
+        # Sort the DataFrame by importance in descending order
+        feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
+
+        # Create the Plotly figure for feature importances
+        fig = px.bar(
+            feature_importance_df,
+            x='Importance',
+            y='Feature',
+            orientation='h',
+            title='Random Forest Feature Importance',
+            labels={'Importance': 'Feature Importance'},
+        )
+
+        # Set the y-axis order to be descending based on Importance
+        fig.update_yaxes(categoryorder='total ascending')
+
+        # Customize the x-axis and y-axis labels
+        fig.update_xaxes(title_text='Feature Importance')
+        fig.update_yaxes(title_text='Feature')
+
+        # Set a different color for positive and negative importances (optional)
+        fig.update_traces(marker_color=['green' if imp > 0 else 'red' for imp in feature_importance_df['Importance']])
+        # Add data labels with increased font size
+        fig.update_traces(
+            text=feature_importance_df['Importance'].apply(lambda x: f'{x:.3f}'),  # Format to three decimals
+            textposition='outside',
+            textfont=dict(size=20)  # Set the desired font size here
+        )
+
+        # Show the Plotly figure
+        st.plotly_chart(fig)
+
+
+
+
+
+
+
+
 
 
 
@@ -1528,6 +1228,7 @@ if file is not None:
         # p(Y)= 1/1+e^-(c1f+c2f...)
         #   Score = c +c1f + c2f + c3f
         # mapping categorical variables
+
         gender_mapping = {'Male': 0, 'Female': 1}
         # Create a dictionary to map geography values to numerical values
         geography_mapping = {
@@ -1541,48 +1242,49 @@ if file is not None:
             "Andhra Pradesh": 7
         }
 
-        score_data = generated_data.copy()
-        score_data['gender'] = score_data['gender'].map(gender_mapping)
+        score_data1 = generated_data.copy()
+        score_data1['gender'] = score_data1['gender'].map(gender_mapping)
         # Use the map function to apply the mapping to the 'geography' column
-        score_data['geography'] = score_data['geography'].map(geography_mapping)
+        score_data1['geography'] = score_data1['geography'].map(geography_mapping)
         # Transform the Categorical Variables: Creating Dummy Variables
-        score_data = pd.get_dummies(score_data, columns=['geography'])
-        print("generated_data")
+        score_data1 = pd.get_dummies(score_data1, columns=['geography'])
 
-        coefficient = fit_and_estimate.coefficient.astype(str).astype(float).iloc[:-1]
+        geography_mapping = {
+
+            "geography_1": "Bihar",
+            "geography_2": "Goa",
+            "geography_3": "Gujarat",
+            "geography_4": "Kerala",
+            "geography_5": "Madhya Pradesh",
+            "geography_6": "Maharashtra",
+            "geography_7": "Andhra Pradesh",
+            "isactivemember": "is active member",
+            "hascrcard":"has credit card",
+            "numofproducts": "num of products",
+
+        }
 
 
-        def calculate_score(row):
-            return sum(coef * feature for coef, feature in zip(coefficient, row))
+        cust_id_index=score_data1['customer_id']
+        score_data1 = score_data1.drop(['customer_id'], axis=1)
+        prob= model.predict_proba(score_data1)[:, 1]
+
+        # Use the .rename() function to replace index labels
+        score_data1 = score_data1.rename(columns=geography_mapping)
 
 
-        # Apply the function to each row of the DataFrame
-        cust_id_index=score_data['customer_id']
-        score_data = score_data.drop(['customer_id', 'estimatedsalary', 'balance'], axis=1)
+        score_data1['probability']=prob
 
-        # score_data = score_data.drop('intercept', axis=1)
+        #add categories
+        score_data1['churn_category'] = score_data1['probability'].apply(lambda x: "High" if x > 0.7 else ("Medium" if x > 0.4 else "Low"))
 
-        score_data['CxF'] = score_data.apply(calculate_score, axis=1)
 
-        #   X = 1 + e ^ -Score
+                
+        print(set(score_data1['churn_category'].to_list()))
 
-        score_data['X'] = 1 + np.exp(-score_data['CxF'])
-
-        #   P(Y) = 1 / X
-
-        score_data['churn_prob'] = 1 / score_data['X']
-        # IF(J2>0.7,"High",IF(J2>0.4,"Medium","Low"))
-        score_data['churn_category'] = score_data['churn_prob'].apply(
-            lambda x: "High" if x > 0.7 else ("Medium" if x > 0.4 else "Low"))
-
-        score_data['churn_category'] = score_data['churn_prob'].apply(
-            lambda x: "High" if x > 0.7 else ("Medium" if x > 0.4 else "Low"))
-
-        print(set(score_data['churn_category'].to_list()))
-
-        category_percentages = (score_data['churn_category'].value_counts(normalize=True) * 100).reset_index()
+        category_percentages = (score_data1['churn_category'].value_counts(normalize=True) * 100).reset_index()
         category_percentages.columns = ['churn_category', 'percentage']  # Set column names
-        score_data.insert(0, 'customer_id', cust_id_index)
+        score_data1.insert(0, 'customer_id', cust_id_index)
 
 
         # Define color mapping for categories
@@ -1607,13 +1309,13 @@ if file is not None:
         st.plotly_chart(fig)
 
         # Merge 'score_data' columns into 'generated_data' based on 'customer_id'
-        final_op=generated_data = generated_data.merge(score_data[['customer_id','churn_prob', 'churn_category']], on='customer_id', how='left')
+        final_op=generated_data = generated_data.merge(score_data1[['customer_id','probability', 'churn_category']], on='customer_id', how='left')
         final_op.set_index('customer_id', inplace=True)
 
 
     st.download_button(
         "Click to Download",
-        pd.DataFrame(final_op).sort_values(by = 'churn_prob', ascending = False).to_csv(),
+        pd.DataFrame(final_op).sort_values(by = 'probability', ascending = False).to_csv(),
         "scored_customers.csv",
         "text/csv",
         key='download-csv'
