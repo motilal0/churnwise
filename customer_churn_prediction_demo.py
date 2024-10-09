@@ -844,8 +844,8 @@ if file is not None:
 
         #NN Classifier
         NN_classifier = Sequential()
-        NN_classifier.add(Dense(8.5, activation = 'relu',input_dim = 16))
-        NN_classifier.add(Dense(8.5, activation = 'relu'))
+        NN_classifier.add(Dense(8, activation = 'relu',input_dim = 16))
+        NN_classifier.add(Dense(8, activation = 'relu'))
         ### If we have more than 2 categories in the dependent variable then the activation function used in the output layer is softmax
         ### softmax is a sigmoid activation function for dependent variable with more than 2 categories
         ## and Output_dim = 3 for 3 categories in the dependent variable
