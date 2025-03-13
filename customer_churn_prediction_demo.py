@@ -179,7 +179,7 @@ if file is not None:
         st.plotly_chart(fig)
         print(geography_churn_rates)
 
-        # Calculate churn rates by geography
+        # Calculate churn rates by hascrcard
         hascrcard_churn_rates = churn_data.groupby('hascrcard')['churn'].mean() * 100
 
         # Create a Plotly line chart
@@ -206,7 +206,7 @@ if file is not None:
         st.plotly_chart(fig)
         print(hascrcard_churn_rates)
 
-        # Calculate churn rates by geography
+        # Calculate churn rates by isactivemember
         isactivemember_churn_rates = churn_data.groupby('isactivemember')['churn'].mean() * 100
 
         # Create a Plotly line chart
@@ -345,11 +345,11 @@ if file is not None:
         # churn rate
 
         # Calculate churn rate for age slab
-        churn_rate = df_bin.groupby('age_slab')['churn'].mean() * 100
+        age_churn_rate = df_bin.groupby('age_slab')['churn'].mean() * 100
 
         # Create a Plotly line chart
         fig1 = px.line(
-            churn_rate.reset_index(),
+            age_churn_rate.reset_index(),
             x='age_slab',
             y='churn',
             markers=True,  # Enable markers
@@ -367,6 +367,7 @@ if file is not None:
         )
 
         st.plotly_chart(fig1)
+        print(age_churn_rate)
 
         # Salary vs churn
         salary_bins = [18, 10000, 60000, 110000, 130000, 150000, 170000, 210000]  # Salary categories
@@ -404,7 +405,8 @@ if file is not None:
 
         # Display the chart
         st.plotly_chart(fig)
-
+        print(salary_bins_churn_rate)
+      
         creditscore_bins = [350, 500, 750, 800, 900]  # Credit Score categories
 
         df_bin = churn_mapped_data.copy()
@@ -415,11 +417,11 @@ if file is not None:
         # churn rate
 
         # Calculate churn rate for creditscore slab
-        churn_rate = df_bin.groupby('creditscore_slab')['churn'].mean() * 100
+        creditscore_churn_rate = df_bin.groupby('creditscore_slab')['churn'].mean() * 100
 
         # Create a Plotly line chart
         fig = px.line(
-            churn_rate.reset_index(),
+            creditscore_churn_rate.reset_index(),
             x='creditscore_slab',
             y='churn',
             markers=True,  # Enable markers
@@ -431,6 +433,7 @@ if file is not None:
         fig.update_xaxes(title_text='creditscore_slab')
         fig.update_yaxes(title_text='churn Rate (%)')
         st.plotly_chart(fig)
+        print(creditscore_churn_rate)
 
         #
         # # Correlation matrix
