@@ -2,7 +2,7 @@ PyPDF2
 pdfplumber
 docx2txt
 scikit-learn
-spacy==2.3.5
+spacy
 nltk
 pyresparser
 gensim
@@ -14,7 +14,7 @@ patsy
 pandas
 numpy
 shap
-streamlit==1.27.0
+streamlit
 streamlit-aggrid
 scipy
 tensorflow
