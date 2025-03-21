@@ -1,6 +1,5 @@
 PyPDF2
 pdfplumber
-nlp
 docx2txt
 scikit-learn
 spacy==2.3.5
