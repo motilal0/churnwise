@@ -1354,26 +1354,6 @@ if file is not None:
         fig.update_traces(texttemplate='%{y:.2f}%', textposition='auto')
 
         st.plotly_chart(fig)
-        #         # Matplotlib Bar Chart
-        # fig, ax = plt.subplots(figsize=(6, 4))
-        # bars = ax.bar(
-        #     category_percentages['churn_category'],
-        #     category_percentages['percentage'],
-        #     color=[color_mapping[c] for c in category_percentages['churn_category']]
-        # )
-
-        # # Add labels to bars
-        # for bar in bars:
-        #     height = bar.get_height()
-        #     ax.text(bar.get_x() + bar.get_width() / 2, height + 1, f"{height:.2f}%", ha='center')
-
-        # # Set labels and title
-        # ax.set_xlabel("Churn Category")
-        # ax.set_ylabel("Percentage")
-        # ax.set_title("Churn Prediction Category")
-
-        # # Display the plot in Streamlit
-        # st.pyplot(fig)
 
         # Merge 'score_data' columns into 'generated_data' based on 'customer_id'
         final_op=generated_data = generated_data.merge(score_data1[['customer_id','probability', 'churn_category']], on='customer_id', how='left')
