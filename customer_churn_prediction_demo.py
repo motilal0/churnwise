@@ -1323,6 +1323,7 @@ if file is not None:
 
                 
         print(set(score_data1['churn_category'].to_list()))
+        st.write(set(score_data1['churn_category'].to_list())
 
         category_percentages = (score_data1['churn_category'].value_counts(normalize=True) * 100).reset_index()
         category_percentages.columns = ['churn_category', 'percentage']  # Set column names
