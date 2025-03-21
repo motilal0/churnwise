@@ -1339,21 +1339,41 @@ if file is not None:
         st.write(category_percentages)  # Show data in Streamlit
         st.write(score_data1['churn_category'].value_counts())  # Debug churn_category counts
 
-        # Create a histogram using Plotly with category order and custom colors
-        fig = px.bar(
-            category_percentages,
-            x='churn_category',
-            y='percentage',  # Use 'percentage' for the y-axis
-            title='Churn Prediction Category',
-            labels={'churn_category': 'Churn Category', 'percentage': 'Churn Percentage'},
-            color='churn_category',
-            color_discrete_map=color_mapping,
-            category_orders={'churn_category': category_order},
-        )
-        # Add data labels to the bars
-        fig.update_traces(texttemplate='%{y:.2f}%', textposition='auto')
+        # # Create a histogram using Plotly with category order and custom colors
+        # fig = px.bar(
+        #     category_percentages,
+        #     x='churn_category',
+        #     y='percentage',  # Use 'percentage' for the y-axis
+        #     title='Churn Prediction Category',
+        #     labels={'churn_category': 'Churn Category', 'percentage': 'Churn Percentage'},
+        #     color='churn_category',
+        #     color_discrete_map=color_mapping,
+        #     category_orders={'churn_category': category_order},
+        # )
+        # # Add data labels to the bars
+        # fig.update_traces(texttemplate='%{y:.2f}%', textposition='auto')
 
-        st.plotly_chart(fig)
+        # st.plotly_chart(fig)
+                # Matplotlib Bar Chart
+        fig, ax = plt.subplots(figsize=(6, 4))
+        bars = ax.bar(
+            category_percentages['churn_category'],
+            category_percentages['percentage'],
+            color=[color_mapping[c] for c in category_percentages['churn_category']]
+        )
+
+        # Add labels to bars
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width() / 2, height + 1, f"{height:.2f}%", ha='center')
+
+        # Set labels and title
+        ax.set_xlabel("Churn Category")
+        ax.set_ylabel("Percentage")
+        ax.set_title("Churn Prediction Category")
+
+        # Display the plot in Streamlit
+        st.pyplot(fig)
 
         # Merge 'score_data' columns into 'generated_data' based on 'customer_id'
         final_op=generated_data = generated_data.merge(score_data1[['customer_id','probability', 'churn_category']], on='customer_id', how='left')
