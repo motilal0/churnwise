@@ -1323,7 +1323,7 @@ if file is not None:
 
                 
         print(set(score_data1['churn_category'].to_list()))
-        st.write(set(score_data1['churn_category'].to_list()))
+        # st.write(set(score_data1['churn_category'].to_list()))
 
         category_percentages = (score_data1['churn_category'].value_counts(normalize=True) * 100).reset_index()
         category_percentages.columns = ['churn_category', 'percentage']  # Set column names
@@ -1336,8 +1336,8 @@ if file is not None:
         category_order = ['High', 'Medium', 'Low']
 
         print(category_percentages)  # Debugging step
-        st.write(category_percentages)  # Show data in Streamlit
-        st.write(score_data1['churn_category'].value_counts())  # Debug churn_category counts
+        # st.write(category_percentages)  # Show data in Streamlit
+        # st.write(score_data1['churn_category'].value_counts())  # Debug churn_category counts
 
         # # Create a histogram using Plotly with category order and custom colors
         # fig = px.bar(
